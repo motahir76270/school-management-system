@@ -3,138 +3,54 @@ import React, { useState } from 'react'
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import HeaderSection from '@/components/features/header';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import AuthValiation from '@/validations/auth';
+import { useSelector } from 'react-redux';
+import { studentPasswordChange, teacherPasswordChange } from '@/hooks/apiCalls/auth';
+import { FullScreenLoader } from '@/hooks/use-screensLoder';
+
+
+type PasswordFormData = z.infer<typeof AuthValiation.passwordSchema>;
 
 const ChangePasswordScreen = () => {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
   
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
+  const { user } = useSelector((state: any) => state.auth);
 
-  const validatePassword = (password: string) => {
-    const errors = [];
-    if (password.length < 8) {
-      errors.push('At least 8 characters');
-    }
-    if (!/[A-Z]/.test(password)) {
-      errors.push('One uppercase letter');
-    }
-    if (!/[a-z]/.test(password)) {
-      errors.push('One lowercase letter');
-    }
-    if (!/[0-9]/.test(password)) {
-      errors.push('One number');
-    }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      errors.push('One special character');
-    }
-    return errors;
-  };
-
-  const validateForm = () => {
-    let isValid = true;
-    const newErrors = {
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+    reset
+  } = useForm<PasswordFormData>({
+    resolver: zodResolver(AuthValiation.passwordSchema),
+    defaultValues: {
       currentPassword: '',
       newPassword: '',
-      confirmPassword: ''
-    };
+      confirmPassword: '',
+    },
+    mode: 'onChange',
+  });
 
-    // Validate current password
-    if (!currentPassword) {
-      newErrors.currentPassword = 'Current password is required';
-      isValid = false;
-    }
-
-    // Validate new password
-    if (!newPassword) {
-      newErrors.newPassword = 'New password is required';
-      isValid = false;
-    } else if (newPassword.length < 8) {
-      newErrors.newPassword = 'Password must be at least 8 characters';
-      isValid = false;
-    } else if (newPassword === currentPassword) {
-      newErrors.newPassword = 'New password must be different from current password';
-      isValid = false;
-    } else {
-      const passwordErrors = validatePassword(newPassword);
-      if (passwordErrors.length > 0) {
-        newErrors.newPassword = `Password must contain: ${passwordErrors.join(', ')}`;
-        isValid = false;
-      }
-    }
-
-    // Validate confirm password
-    if (!confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your new password';
-      isValid = false;
-    } else if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleChangePassword = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    setLoading(true);
-    
-    // Simulate API call
-    try {
-      // Replace this with your actual API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Simulate current password check
-      if (currentPassword !== 'current123') { // Replace with actual validation
-        Alert.alert('Error', 'Current password is incorrect');
-        setLoading(false);
-        return;
-      }
-      
-      Alert.alert(
-        'Success',
-        'Your password has been changed successfully!',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Navigate back or to login screen
-              // router.back();
-            }
-          }
-        ]
-      );
-      
-      // Clear form
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      
-    } catch (error) {
-      Alert.alert('Error', 'Failed to change password. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const newPassword = watch('newPassword');
 
   const getPasswordStrength = () => {
     if (!newPassword) return 0;
-    const errors = validatePassword(newPassword);
-    const strength = 5 - errors.length;
+    let strength = 0;
+    if (newPassword.length >= 8) strength++;
+    if (/[A-Z]/.test(newPassword)) strength++;
+    if (/[a-z]/.test(newPassword)) strength++;
+    if (/[0-9]/.test(newPassword)) strength++;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) strength++;
     return strength;
   };
 
@@ -153,6 +69,43 @@ const ChangePasswordScreen = () => {
     return 'Very Strong';
   };
 
+  const onSubmit = async (data: PasswordFormData) => {
+    setLoading(true);
+    
+    try {
+            if(user?.role === "teacher"){
+              const payload ={
+                current_password:data.currentPassword,
+                password:data.newPassword,
+                password_confirmation:data.confirmPassword
+              }
+               const res =  await teacherPasswordChange(payload);
+                 if(res?.success === true){
+                  Alert.alert("SUCCESS", res?.message);
+                  reset();
+                 }else{
+                  Alert.alert("SUCCESS", res?.message);
+                 }
+             }else{
+                const res = await studentPasswordChange(data)
+                   if(res?.success === true){
+                  Alert.alert("SUCCESS", res?.message);
+                 }else{
+                  Alert.alert("SUCCESS", res?.message);
+                 }
+             }     
+    } catch (error) {
+      Alert.alert('Failed', 'Server not resposed! Please check internet connection and try again later');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Check if password meets requirements (for display)
+  const checkRequirement = (regex: RegExp, value: string) => {
+    return regex.test(value);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <HeaderSection title="Change Password" />
@@ -169,143 +122,153 @@ const ChangePasswordScreen = () => {
           {/* Current Password */}
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: colors.textPrimary }]}>Current Password</Text>
-            <View style={[styles.inputWrapper, { borderColor: errors.currentPassword ? colors.error : colors.border }]}>
-              <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} />
-              <TextInput
-                style={[styles.input, { color: colors.textPrimary }]}
-                placeholder="Enter current password"
-                placeholderTextColor={colors.textSecondary}
-                secureTextEntry={!showCurrentPassword}
-                value={currentPassword}
-                onChangeText={(text) => {
-                  setCurrentPassword(text);
-                  setErrors({ ...errors, currentPassword: '' });
-                }}
-              />
-              <TouchableOpacity onPress={() => setShowCurrentPassword(!showCurrentPassword)}>
-                <Ionicons 
-                  name={showCurrentPassword ? "eye-off-outline" : "eye-outline"} 
-                  size={20} 
-                  color={colors.textSecondary} 
-                />
-              </TouchableOpacity>
-            </View>
-            {errors.currentPassword ? (
-              <Text style={[styles.errorText, { color: colors.error }]}>{errors.currentPassword}</Text>
-            ) : null}
+            <Controller
+              control={control}
+              name="currentPassword"
+              render={({ field: { onChange, value } }) => (
+                <View style={[styles.inputWrapper, { borderColor: errors.currentPassword ? colors.error : colors.border }]}>
+                  <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} />
+                  <TextInput
+                    style={[styles.input, { color: colors.textPrimary }]}
+                    placeholder="Enter current password"
+                    placeholderTextColor={colors.textSecondary}
+                    secureTextEntry={!showCurrentPassword}
+                    value={value}
+                    onChangeText={onChange}
+                  />
+                  <TouchableOpacity onPress={() => setShowCurrentPassword(!showCurrentPassword)}>
+                    <Ionicons 
+                      name={showCurrentPassword ? "eye-off-outline" : "eye-outline"} 
+                      size={20} 
+                      color={colors.textSecondary} 
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+            {errors.currentPassword && (
+              <Text style={[styles.errorText, { color: colors.error }]}>{errors.currentPassword.message}</Text>
+            )}
           </View>
 
           {/* New Password */}
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: colors.textPrimary }]}>New Password</Text>
-            <View style={[styles.inputWrapper, { borderColor: errors.newPassword ? colors.error : colors.border }]}>
-              <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} />
-              <TextInput
-                style={[styles.input, { color: colors.textPrimary }]}
-                placeholder="Enter new password"
-                placeholderTextColor={colors.textSecondary}
-                secureTextEntry={!showNewPassword}
-                value={newPassword}
-                onChangeText={(text) => {
-                  setNewPassword(text);
-                  setErrors({ ...errors, newPassword: '' });
-                }}
-              />
-              <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)}>
-                <Ionicons 
-                  name={showNewPassword ? "eye-off-outline" : "eye-outline"} 
-                  size={20} 
-                  color={colors.textSecondary} 
-                />
-              </TouchableOpacity>
-            </View>
-            
-            {/* Password Strength Indicator */}
-            {newPassword ? (
-              <View style={styles.strengthContainer}>
-                <View style={styles.strengthBarContainer}>
-                  <View style={[styles.strengthBar, { width: `${(getPasswordStrength() / 5) * 100}%`, backgroundColor: getStrengthColor() }]} />
-                </View>
-                <Text style={[styles.strengthText, { color: getStrengthColor() }]}>
-                  Password Strength: {getStrengthText()}
-                </Text>
-              </View>
-            ) : null}
-            
-            {errors.newPassword ? (
-              <Text style={[styles.errorText, { color: colors.error }]}>{errors.newPassword}</Text>
-            ) : null}
+            <Controller
+              control={control}
+              name="newPassword"
+              render={({ field: { onChange, value } }) => (
+                <>
+                  <View style={[styles.inputWrapper, { borderColor: errors.newPassword ? colors.error : colors.border }]}>
+                    <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} />
+                    <TextInput
+                      style={[styles.input, { color: colors.textPrimary }]}
+                      placeholder="Enter new password"
+                      placeholderTextColor={colors.textSecondary}
+                      secureTextEntry={!showNewPassword}
+                      value={value}
+                      onChangeText={onChange}
+                    />
+                    <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)}>
+                      <Ionicons 
+                        name={showNewPassword ? "eye-off-outline" : "eye-outline"} 
+                        size={20} 
+                        color={colors.textSecondary} 
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  
+                  {/* Password Strength Indicator */}
+                  {value && (
+                    <View style={styles.strengthContainer}>
+                      <View style={styles.strengthBarContainer}>
+                        <View style={[styles.strengthBar, { width: `${(getPasswordStrength() / 5) * 100}%`, backgroundColor: getStrengthColor() }]} />
+                      </View>
+                      <Text style={[styles.strengthText, { color: getStrengthColor() }]}>
+                        Password Strength: {getStrengthText()}
+                      </Text>
+                    </View>
+                  )}
+                </>
+              )}
+            />
+            {errors.newPassword && (
+              <Text style={[styles.errorText, { color: colors.error }]}>{errors.newPassword.message}</Text>
+            )}
           </View>
 
           {/* Confirm New Password */}
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: colors.textPrimary }]}>Confirm New Password</Text>
-            <View style={[styles.inputWrapper, { borderColor: errors.confirmPassword ? colors.error : colors.border }]}>
-              <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} />
-              <TextInput
-                style={[styles.input, { color: colors.textPrimary }]}
-                placeholder="Confirm new password"
-                placeholderTextColor={colors.textSecondary}
-                secureTextEntry={!showConfirmPassword}
-                value={confirmPassword}
-                onChangeText={(text) => {
-                  setConfirmPassword(text);
-                  setErrors({ ...errors, confirmPassword: '' });
-                }}
-              />
-              <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                <Ionicons 
-                  name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} 
-                  size={20} 
-                  color={colors.textSecondary} 
-                />
-              </TouchableOpacity>
-            </View>
-            {errors.confirmPassword ? (
-              <Text style={[styles.errorText, { color: colors.error }]}>{errors.confirmPassword}</Text>
-            ) : null}
+            <Controller
+              control={control}
+              name="confirmPassword"
+              render={({ field: { onChange, value } }) => (
+                <View style={[styles.inputWrapper, { borderColor: errors.confirmPassword ? colors.error : colors.border }]}>
+                  <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} />
+                  <TextInput
+                    style={[styles.input, { color: colors.textPrimary }]}
+                    placeholder="Confirm new password"
+                    placeholderTextColor={colors.textSecondary}
+                    secureTextEntry={!showConfirmPassword}
+                    value={value}
+                    onChangeText={onChange}
+                  />
+                  <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                    <Ionicons 
+                      name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} 
+                      size={20} 
+                      color={colors.textSecondary} 
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+            {errors.confirmPassword && (
+              <Text style={[styles.errorText, { color: colors.error }]}>{errors.confirmPassword.message}</Text>
+            )}
           </View>
 
           {/* Password Requirements */}
-          <View style={styles.requirementsContainer}>
+          <View style={[styles.requirementsContainer, { backgroundColor: colors.background }]}>
             <Text style={[styles.requirementsTitle, { color: colors.textSecondary }]}>Password Requirements:</Text>
             <View style={styles.requirementRow}>
               <Ionicons 
-                name={newPassword.length >= 8 ? "checkmark-circle" : "ellipse-outline"} 
+                name={newPassword && newPassword.length >= 8 ? "checkmark-circle" : "ellipse-outline"} 
                 size={16} 
-                color={newPassword.length >= 8 ? colors.success : colors.textSecondary} 
+                color={newPassword && newPassword.length >= 8 ? colors.success : colors.textSecondary} 
               />
               <Text style={[styles.requirementText, { color: colors.textSecondary }]}>At least 8 characters</Text>
             </View>
             <View style={styles.requirementRow}>
               <Ionicons 
-                name={/[A-Z]/.test(newPassword) ? "checkmark-circle" : "ellipse-outline"} 
+                name={newPassword && /[A-Z]/.test(newPassword) ? "checkmark-circle" : "ellipse-outline"} 
                 size={16} 
-                color={/[A-Z]/.test(newPassword) ? colors.success : colors.textSecondary} 
+                color={newPassword && /[A-Z]/.test(newPassword) ? colors.success : colors.textSecondary} 
               />
               <Text style={[styles.requirementText, { color: colors.textSecondary }]}>At least one uppercase letter</Text>
             </View>
             <View style={styles.requirementRow}>
               <Ionicons 
-                name={/[a-z]/.test(newPassword) ? "checkmark-circle" : "ellipse-outline"} 
+                name={newPassword && /[a-z]/.test(newPassword) ? "checkmark-circle" : "ellipse-outline"} 
                 size={16} 
-                color={/[a-z]/.test(newPassword) ? colors.success : colors.textSecondary} 
+                color={newPassword && /[a-z]/.test(newPassword) ? colors.success : colors.textSecondary} 
               />
               <Text style={[styles.requirementText, { color: colors.textSecondary }]}>At least one lowercase letter</Text>
             </View>
             <View style={styles.requirementRow}>
               <Ionicons 
-                name={/[0-9]/.test(newPassword) ? "checkmark-circle" : "ellipse-outline"} 
+                name={newPassword && /[0-9]/.test(newPassword) ? "checkmark-circle" : "ellipse-outline"} 
                 size={16} 
-                color={/[0-9]/.test(newPassword) ? colors.success : colors.textSecondary} 
+                color={newPassword && /[0-9]/.test(newPassword) ? colors.success : colors.textSecondary} 
               />
               <Text style={[styles.requirementText, { color: colors.textSecondary }]}>At least one number</Text>
             </View>
             <View style={styles.requirementRow}>
               <Ionicons 
-                name={/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) ? "checkmark-circle" : "ellipse-outline"} 
+                name={newPassword && /[!@#$%^&*(),.?":{}|<>]/.test(newPassword) ? "checkmark-circle" : "ellipse-outline"} 
                 size={16} 
-                color={/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) ? colors.success : colors.textSecondary} 
+                color={newPassword && /[!@#$%^&*(),.?":{}|<>]/.test(newPassword) ? colors.success : colors.textSecondary} 
               />
               <Text style={[styles.requirementText, { color: colors.textSecondary }]}>At least one special character</Text>
             </View>
@@ -314,17 +277,18 @@ const ChangePasswordScreen = () => {
           {/* Update Button */}
           <TouchableOpacity 
             style={[styles.updateButton, { backgroundColor: colors.primary }]}
-            onPress={handleChangePassword}
+            onPress={handleSubmit(onSubmit)}
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#FFF" />
+                <Text style={styles.updateButtonText}>Updating</Text>
             ) : (
               <Text style={styles.updateButtonText}>Update Password</Text>
             )}
           </TouchableOpacity>
         </View>
       </ScrollView>
+      <FullScreenLoader loading={loading} />
     </View>
   )
 }
@@ -401,7 +365,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     padding: 12,
     borderRadius: 8,
-    backgroundColor: 'rgba(0,0,0,0.05)',
   },
   requirementsTitle: {
     fontSize: 13,

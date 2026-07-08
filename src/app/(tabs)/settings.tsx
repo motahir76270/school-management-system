@@ -6,9 +6,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { routeToScreen } from 'expo-router/build/useScreens';
 import { LinearGradient } from 'expo-linear-gradient';
+import { loagoutApiCall } from '@/hooks/apiCalls/auth';
+import { useSelector } from 'react-redux';
 
 
 export default function SettingsScreen() {
+  const { user } = useSelector((state: any) => state.auth);
     const scheme = useColorScheme();
     const color = Colors[scheme === 'unspecified' ? 'light' : scheme];
 
@@ -65,8 +68,33 @@ export default function SettingsScreen() {
     );
   };
 
+const handleLogoutBtn = async () => {
+  Alert.alert(
+    "Logout",
+    "Are you sure you want to logout?",
+    [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            // Your logout logic here
+            await loagoutApiCall()
+          } catch (error) {
+            console.error(error);
+          }
+        },
+      },
+    ]
+  );
+};
+
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <LinearGradient         
         colors={ [color.primary, color.tertiary,  color.secondary] }
         start={{ x: 0, y: 0 }}
@@ -77,61 +105,144 @@ export default function SettingsScreen() {
       </SafeAreaView>
       </LinearGradient>
 
+    <ScrollView style={{paddingBottom:120}}>
+
+
+      {/* Attendance Section */}
+      {
+        user?.role === "teacher" && 
+       <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Attendance</Text>
+        <View style={styles.sectionCard}>
+         <SettingItem
+            title="Manual Attendance"
+            icon="finger-print"
+            iconType="Ionicons"
+            screen="/screens/settings/Attendance/manual"
+            hasArrow={true}
+          />
+          <SettingItem
+            title="QR Scan Attendance"
+            icon="scan-outline"
+            iconType="Ionicons"
+            screen="/screens/settings/Attendance/qrScan"
+            hasArrow={true}
+          />
+         <SettingItem
+            title="Attendance History"
+            icon="time-outline"
+            iconType="Ionicons"
+            screen="/screens/settings/Attendance/history"
+            hasArrow={true}
+          />
+
+        </View>
+      </View>
+      }
 
       {/* Academic Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Academic</Text>
         <View style={styles.sectionCard}>
+
           <SettingItem
-            title="Academic Calendar"
+            title="Notices"
+            icon="notifications-outline"
+            iconType="Ionicons"
+            screen="/screens/settings/notices"
+            hasArrow={true}
+          />
+          <View style={styles.divider} />
+ 
+          <SettingItem
+            title="Academic Holidays"
             icon="calendar-outline"
             iconType="Ionicons"
+            screen="/screens/settings/holidays"
             hasArrow={true}
           />
           <View style={styles.divider} />
           <SettingItem
             title="Exam Schedule"
+            icon="calendar-outline"
+            iconType="Ionicons"
+            screen="/screens/settings/ExamShedule"
+            hasArrow={true}
+          />
+          <View style={styles.divider} />
+          <SettingItem
+            title="Reports Card"
             icon="document-text-outline"
             iconType="Ionicons"
+            screen="/screens/settings/reportCard"
             hasArrow={true}
           />
-          <View style={styles.divider} />
-          <SettingItem
-            title="Download Reports"
-            icon="download-outline"
-            iconType="Ionicons"
-            hasArrow={true}
-          />
-          <View style={styles.divider} />
-          <SettingItem
-            title="Study Materials"
-            icon="book-outline"
-            iconType="Ionicons"
-            hasArrow={true}
-          />
+    
         </View>
       </View>
 
-      {/* Account Section */}
+
+      {/* Online MCQ Section */}
+     {    user?.role === "teacher" && 
+       <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Online MCQ</Text>
+        <View style={styles.sectionCard}>
+
+          <SettingItem
+            title="Online MCQ"
+            icon="clipboard-outline"
+            iconType="Ionicons"
+            screen="/screens/settings/onlineMCQ/exam"
+            hasArrow={true}
+          />
+          <View style={styles.divider} />
+
+          <SettingItem
+            title="Exam Reports"
+            icon="analytics-outline"
+            iconType="Ionicons"
+            screen="/screens/settings/onlineMCQ/examReport"
+            hasArrow={true}
+          />
+
+        </View>
+      </View>
+    }  
+
+      {/* Live Classes Section */}
+     {    user?.role === "teacher" && 
+       <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Live Classes</Text>
+        <View style={styles.sectionCard}>
+
+            <SettingItem
+            title="My Classes"
+            icon="videocam-outline"
+            iconType="Ionicons"
+            screen="/screens/settings/liveClasses/myClasses"
+            hasArrow={true}
+          />
+          <View style={styles.divider} />
+
+          <SettingItem
+            title="Classes Reports"
+            icon="bar-chart-outline"
+            iconType="Ionicons"
+            screen="/screens/settings/liveClasses/ClassesReports"
+            hasArrow={true}
+          />
+
+        </View>
+      </View>
+     }
+
+
+        {/* Account Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
         <View style={styles.sectionCard}>
-          <SettingItem
-            title="Privacy & Security"
-            icon="shield-outline"
-            iconType="Ionicons"
-            screen="/screens/settings/privacy"
-            hasArrow={true}
-          />
-          <View style={styles.divider} />
-          <SettingItem
-            title="Parent Access"
-            icon="people-outline"
-            iconType="Ionicons"
-            hasArrow={true}
-          />
-          <View style={styles.divider} />
-          <SettingItem
+
+         <SettingItem
             title="Change Password"
             icon="lock-closed-outline"
             iconType="Ionicons"
@@ -139,26 +250,28 @@ export default function SettingsScreen() {
             hasArrow={true}
           />
           <View style={styles.divider} />
-       
-        </View>
-      </View>
+          <SettingItem
+            title="Privacy Policy"
+            icon="shield-checkmark-outline"
+            iconType="Ionicons"
+            screen="/screens/settings/privacy"
+            hasArrow={true}
+          />
+          <View style={styles.divider} />
+          <SettingItem
+            title="Terms of Service"
+            icon="document-text-outline"
+            iconType="Ionicons"
+            screen="/screens/settings/terms"
+            hasArrow={true}
+          />
+          <View style={styles.divider} />
 
-      {/* Support Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Support</Text>
-        <View style={styles.sectionCard}>
           <SettingItem
             title="Help Center"
             icon="help-circle-outline"
             iconType="Ionicons"
             screen="/screens/settings/helpCenter"
-            hasArrow={true}
-          />
-          <View style={styles.divider} />
-          <SettingItem
-            title="FAQ"
-            icon="chatbubbles-outline"
-            iconType="Ionicons"
             hasArrow={true}
           />
           <View style={styles.divider} />
@@ -169,52 +282,18 @@ export default function SettingsScreen() {
             iconType="Ionicons"
             hasArrow={true}
           />
-
-        </View>
-      </View>
-
-      {/* More Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>More</Text>
-        <View style={styles.sectionCard}>
-          <SettingItem
-            title="About App"
-            icon="information-circle-outline"
-            iconType="Ionicons"
-            screen="/screens/settings/about"
-            hasArrow={true}
-          />
-          <View style={styles.divider} />
-     
-          <View style={styles.divider} />
-          <SettingItem
-            title="Privacy Policy"
-            icon="document-text-outline"
-            iconType="Ionicons"
-            screen="/screens/settings/privacy"
-            hasArrow={true}
-          />
-          <View style={styles.divider} />
-          <SettingItem
-            title="Terms of Service"
-            icon="newspaper-outline"
-            iconType="Ionicons"
-            screen="/screens/settings/terms"
-            hasArrow={true}
-          />
         </View>
       </View>
 
       {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutButton}>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogoutBtn}>
         <Ionicons name="log-out-outline" size={22} color="#ff4444" />
         <Text style={styles.logoutButtonText}>Logout</Text>
       </TouchableOpacity>
-
-      <View style={styles.versionContainer}>
-        <Text style={styles.versionText}>Version 1.0.0</Text>
-      </View>
+        
     </ScrollView>
+
+    </View>
   );
 }
 
