@@ -19,7 +19,7 @@ const services: ServiceItem[] = [
   { id: '3', title: 'Home Work', image: images.work, screen: '/screens/features/homeWork' },
   { id: '4', title: 'Assignment', image: images.assignment, screen: '/screens/features/assignment' },
   { id: '6', title: 'Salary Slips', image: images.result, screen: '/screens/features/slarySlip/history' },
-  { id: '7', title: 'Exams', image: images.exams, screen: '/screens/features/exams' },
+  { id: '7', title: 'Mark Entry', image: images.exams, screen: '/screens/features/exams/page' },
   { id: '8', title: 'Time Table', image: images.timeTable, screen: '/screens/features/timeTable' }, 
   { id: '9', title: 'Leave', image: images.leaves, screen: '/screens/features/leaves' }, 
 ];

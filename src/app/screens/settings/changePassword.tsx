@@ -111,13 +111,7 @@ const ChangePasswordScreen = () => {
       <HeaderSection title="Change Password" />
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={[styles.infoCard, { backgroundColor: colors.backgroundElement }]}>
-          <Ionicons name="information-circle" size={24} color={colors.primary} />
-          <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            For better security, your password must contain at least 8 characters including uppercase, lowercase, number, and special character.
-          </Text>
-        </View>
-
+  
         <View style={[styles.formContainer, { backgroundColor: colors.backgroundElement }]}>
           {/* Current Password */}
           <View style={styles.inputGroup}>

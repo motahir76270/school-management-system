@@ -6,6 +6,7 @@ import timeTableReducer from './timeTableSlice'
 import leaveReducer from './leaveSlice'
 import noticeRducer from './noticeSlice'
 import classNotesReduce from './classNoteSlice'
+import marksReducer from './markSlices'
 
 
 export const store = configureStore({
@@ -16,6 +17,7 @@ export const store = configureStore({
     posts:postReducer,
     leave:leaveReducer,
     notice:noticeRducer,
-    classNotes:classNotesReduce
+    classNotes:classNotesReduce,
+    marks:marksReducer
   },
 })

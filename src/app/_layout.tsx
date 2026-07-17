@@ -43,14 +43,24 @@ export default function RootLayout() {
         <Stack.Screen name='screens/features/homeWork' />
         <Stack.Screen name='screens/features/myClasses' />
         <Stack.Screen name='screens/features/myResult' />
-        <Stack.Screen name='screens/features/exams' />
         <Stack.Screen name='screens/features/timeTable' />
         <Stack.Screen name='screens/features/leaves' />
         <Stack.Screen name='screens/features/myAttendance' />
 
+        <Stack.Screen name='screens/features/exams/page' />
+        <Stack.Screen name='screens/features/exams/classExams/[id]' />
+
         <Stack.Screen name='screens/features/fees/feeStructure' />
         <Stack.Screen name='screens/features/fees/feeReceipts' />
         <Stack.Screen name='screens/features/fees/[id]' />
+
+        <Stack.Screen name='screens/features/reportsCard/card/[id]' />
+        <Stack.Screen name='screens/features/reportsCard/userReports/[id]' />
+        <Stack.Screen name='screens/features/reportsCard/allReports' />
+
+        <Stack.Screen name='screens/features/admitCards/card/[id]' />
+        <Stack.Screen name='screens/features/admitCards/admitCard/[id]' />
+        <Stack.Screen name='screens/features/admitCards/page' />
 
         <Stack.Screen name='screens/features/slarySlip/history' />
         <Stack.Screen name='screens/features/slarySlip/[id]' />

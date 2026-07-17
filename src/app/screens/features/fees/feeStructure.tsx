@@ -1,15 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import HeaderSection from '@/components/features/header';
-import { getStudentFeeData } from '@/hooks/apiCalls/student';
+import { getStudentFeeData, intiateTransaction, varifyTransaction } from '@/hooks/apiCalls/student';
 import { FullScreenLoader } from '@/hooks/use-screensLoder';
 import { useDispatch, useSelector } from 'react-redux';
 import { setFeesData } from '@/redux/studentSlice';
+import { RazzorPayTransaction } from '@/hooks/payment/RazzorPay';
+import PaymentConfirmationModal from '@/components/modal/fees/PaymentConfirmationModal';
+import CustomAlertModal from '@/components/modal/CustomAlertModal';
+import PaymentSuccessModal from '@/components/modal/fees/PaymentSuccessModal';
+import { EasebuzzTransaction } from '@/hooks/payment/easeBuzz';
 
-// Updated interfaces to match the actual data structure
+
+// Interfaces
 interface InstallmentReceipt {
   id: string;
   amount: number;
@@ -50,41 +56,29 @@ interface Payment {
   receipt_count: number;
 }
 
-interface FeeSummary {
-  total_assigned: number;
-  total_paid: number;
-  total_due: number;
-  pending_count: number;
-  overdue_count: number;
-}
-
-interface Receipt {
-  id: string;
-  fee_name: string;
-  receipt_no: string;
-  transaction_id: string;
-  amount: number;
-  paid_at: string;
-  paid_at_label: string;
-  print_url: string;
-  pdf_url: string;
-}
-
-interface FeeDataResponse {
-  success: boolean;
-  message: string;
-  summary: FeeSummary;
-  payments: Payment[];
-  receipts: Receipt[];
-}
-
 const FeeStructure = () => {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
+  const [processingFeeId, setProcessingFeeId] = useState<string | null>(null);
+  
+  // Modal states
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [selectedFee, setSelectedFee] = useState<Payment | null>(null);
+  const [successPaymentData, setSuccessPaymentData] = useState<any>(null);
+  
+  // Alert state
+  const [alertType, setAlertType] = useState<any>('success');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertTitle, setAlertTitle] = useState('');
+
   const dispatch = useDispatch();
-  const feeData = useSelector((state: any) => state.student.feesData) as FeeDataResponse | null;
+  const feeData = useSelector((state: any) => state.student.feesData) as any;
 
   const getStatusColor = (status: string) => {
     switch(status?.toLowerCase()) {
@@ -110,6 +104,14 @@ const FeeStructure = () => {
 
   const paymentProgress = feeData ? (feeData.summary.total_paid / feeData.summary.total_assigned) * 100 : 0;
 
+  // Show alert helper
+  const showAlert = (type: any, message: string, title?: string) => {
+    setAlertType(type);
+    setAlertMessage(message);
+    setAlertTitle(title || '');
+    setShowAlertModal(true);
+  };
+
   const fetchFeeData = async () => {
     try {
       setLoading(true);
@@ -117,17 +119,115 @@ const FeeStructure = () => {
       if (res?.success === true) {
         dispatch(setFeesData(res));
       } else {
-        Alert.alert("Failed", res?.message || "Failed to load fee data");
+        showAlert('failed', res?.message || 'Failed to load fee data', 'Error');
       }
     } catch (error) {
-      Alert.alert("Error", "An error occurred while fetching fee data");
+      showAlert('failed', 'An error occurred while fetching fee data', 'Error');
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePayPress = (fee: Payment) => {
+  const handlePaymentBtn = (fee: Payment) => {
+    setSelectedFee(fee);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!selectedFee) return;
     
+    try {
+      setPaymentLoading(true);
+      setShowConfirmModal(false);
+      setProcessingFeeId(selectedFee.id);
+      
+      // Step 1: Initiate transaction
+      const res = await intiateTransaction(selectedFee?.id);    
+      if(res?.success === true){
+        const payload = {
+          amount: res?.checkout?.amount_rupees,
+          currency: feeData?.payment_gateway?.currency,
+          key: feeData?.payment_gateway?.key,
+          fee_name: selectedFee?.fee_name,
+          order_id: res?.checkout?.client?.order_id ||  res?.checkout?.order_id,
+          school_name: res?.checkout?.name
+        };
+
+        // Step 2: Process Razorpay payment
+          let PaymentData:any
+             if(res?.checkout?.gateway === "razorpay"){
+              PaymentData = await RazzorPayTransaction(payload);
+             }else if(res?.checkout?.gateway === "easebuzz"){
+              PaymentData = await EasebuzzTransaction(payload);
+             }
+ 
+
+        if(PaymentData?.success === true){
+          // Step 3: Verify payment
+          setVerifyingPayment(true);
+          const verifyResult = await handlePaymentVerify(selectedFee?.id, PaymentData.data);   
+          setVerifyingPayment(false);
+          if (verifyResult?.success === true) {
+            // Show success modal with payment data
+            setSuccessPaymentData({
+              receipt_no: verifyResult?.payment?.receipt_no || verifyResult?.transaction?.receipt_no || 'N/A',
+              transaction_id: verifyResult?.transaction?.transaction_id || verifyResult?.payment?.transaction_id || 'N/A',
+              message: verifyResult?.message || "Payment successful",
+              amount: verifyResult?.payment?.amount || selectedFee?.amount || 0,
+              fee_name: verifyResult?.payment?.fee_name || selectedFee?.fee_name || 'N/A',
+              payment_method: verifyResult?.payment?.payment_method || "razorpay",
+              paid_at_label: verifyResult?.payment?.paid_at_label || verifyResult?.transaction?.paid_at_label || new Date().toLocaleDateString(),
+            });
+            setShowSuccessModal(true);
+            // Refresh fee data
+            await fetchFeeData();
+          }else{
+              setSuccessPaymentData({
+              receipt_no: verifyResult?.payment?.receipt_no || verifyResult?.transaction?.receipt_no || 'N/A',
+              transaction_id: verifyResult?.transaction?.transaction_id || verifyResult?.payment?.transaction_id || 'N/A',
+              message: verifyResult?.message || "Payment successful",
+              amount: verifyResult?.payment?.amount || selectedFee?.amount || 0,
+              fee_name: verifyResult?.payment?.fee_name || selectedFee?.fee_name || 'N/A',
+              payment_method: verifyResult?.payment?.payment_method || "razorpay",
+              paid_at_label: verifyResult?.payment?.paid_at_label || verifyResult?.transaction?.paid_at_label || new Date().toLocaleDateString(),
+            });
+          }
+        } else {
+          showAlert('Failed', PaymentData?.error?.message || PaymentData?.data?.message , 'Failed' );
+        }
+      } else {
+        showAlert('warning', res?.message || 'Unable to initiate payment', 'Warning');
+      }
+    } catch (error) {
+      console.log('Payment Error:', error);
+      showAlert('failed', 'An error occurred during payment', 'Error');
+    } finally {
+      setPaymentLoading(false);
+      setVerifyingPayment(false);
+      setProcessingFeeId(null);
+      setSelectedFee(null);
+    }
+  };
+
+  const handlePaymentVerify = async (id: any, PaymentData: any) => {
+    try {
+      const res = await varifyTransaction(id, PaymentData);
+      if (res?.success === true) {
+        return res;
+      } else {
+        showAlert('failed', res?.message || 'Payment verification failed', 'Verification Failed');
+        return null;
+      }
+    } catch (error) {
+      console.log('Verification Error:', error);
+      showAlert('failed', 'Payment verification failed. Please check your payment status.', 'Error');
+      return null;
+    }
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    setSuccessPaymentData(null);
   };
 
   const handleReceiptsPress = () => {
@@ -138,18 +238,20 @@ const FeeStructure = () => {
     fetchFeeData();
   }, []);
 
+  // Loading state
   if (loading) {
     return (
       <View style={[styles.mainContainer, styles.centerContent]}>
         <HeaderSection title="Fee Structure" />
         <View style={styles.loadingContainer}>
-          <Text style={{ color: colors.text }}>Loading fee data...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.text }]}>Loading fee data...</Text>
         </View>
       </View>
     );
   }
 
-  if (!feeData || feeData.payments.length === 0) {
+  if (!feeData || feeData.payments?.length === 0) {
     return (
       <View style={[styles.mainContainer, styles.centerContent]}>
         <HeaderSection title="Fee Structure" />
@@ -230,95 +332,161 @@ const FeeStructure = () => {
               </TouchableOpacity>
             </View>
             
-            {feeData.payments.map((fee) => (
-              <View 
-                key={fee.id} 
-                style={[styles.feeCard, { backgroundColor: colors.card }]}
-              >
-                <View style={styles.feeHeader}>
-                  <View style={styles.feeLeft}>
-                    <Text style={[styles.feeTitle, { color: colors.text }]}>{fee.fee_name}</Text>
-                    <Text style={[styles.dueDate, { color: colors.textSecondary }]}>
-                      Due: {fee.due_date_label || 'Not set'}
-                    </Text>
-                    {fee.frequency && (
-                      <Text style={[styles.frequencyText, { color: colors.textSecondary }]}>
-                        Frequency: {fee.frequency}
+            {feeData.payments.map((fee: Payment) => {
+              const isProcessing = processingFeeId === fee.id;
+              const isDisabled = paymentLoading || verifyingPayment;
+              
+              return (
+                <View 
+                  key={fee.id} 
+                  style={[styles.feeCard, { backgroundColor: colors.card }]}
+                >
+                  <View style={styles.feeHeader}>
+                    <View style={styles.feeLeft}>
+                      <Text style={[styles.feeTitle, { color: colors.text }]}>{fee.fee_name}</Text>
+                      <Text style={[styles.dueDate, { color: colors.textSecondary }]}>
+                        Due: {fee.due_date_label || 'Not set'}
                       </Text>
-                    )}
-                    {fee.receipt_no && (
-                      <Text style={[styles.receiptText, { color: colors.textSecondary }]}>
-                        Receipt: {fee.receipt_no}
-                      </Text>
-                    )}
+                      {fee.frequency && (
+                        <Text style={[styles.frequencyText, { color: colors.textSecondary }]}>
+                          Frequency: {fee.frequency}
+                        </Text>
+                      )}
+                      {fee.receipt_no && (
+                        <Text style={[styles.receiptText, { color: colors.textSecondary }]}>
+                          Receipt: {fee.receipt_no}
+                        </Text>
+                      )}
+                    </View>
+                    <View style={styles.feeRight}>
+                      <Text style={[styles.amount, { color: colors.text }]}>₹{fee.amount.toLocaleString()}</Text>
+                      <View style={[styles.statusBadge, { backgroundColor: getStatusColor(fee.status) + '20' }]}>
+                        <Ionicons name={getStatusIcon(fee.status)} size={12} color={getStatusColor(fee.status)} />
+                        <Text style={[styles.statusText, { color: getStatusColor(fee.status) }]}>
+                          {fee.status_label}
+                        </Text>
+                      </View>
+                      {fee.is_overdue && (
+                        <View style={[styles.overdueBadge, { backgroundColor: '#F44336' }]}>
+                          <Text style={styles.overdueText}>Overdue</Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                  <View style={styles.feeRight}>
-                    <Text style={[styles.amount, { color: colors.text }]}>₹{fee.amount.toLocaleString()}</Text>
-                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(fee.status) + '20' }]}>
-                      <Ionicons name={getStatusIcon(fee.status)} size={12} color={getStatusColor(fee.status)} />
-                      <Text style={[styles.statusText, { color: getStatusColor(fee.status) }]}>
-                        {fee.status_label}
+                  
+                  {/* Show total payable with late fee if applicable */}
+                  {fee.total_payable > fee.amount && (
+                    <View style={styles.lateFeeInfo}>
+                      <Ionicons name="alert-circle" size={14} color="#FF9800" />
+                      <Text style={[styles.lateFeeText, { color: '#FF9800' }]}>
+                        Late Fee: ₹{fee.late_fee_amount} ({fee.late_fee_days} days × ₹{fee.late_fee_per_day}) + ₹{fee.amount}
                       </Text>
                     </View>
-                    {fee.is_overdue && (
-                      <View style={[styles.overdueBadge, { backgroundColor: '#F44336' }]}>
-                        <Text style={styles.overdueText}>Overdue</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-                
-                {/* Show total payable with late fee if applicable */}
-                {fee.total_payable > fee.amount && (
-                  <View style={styles.lateFeeInfo}>
-                    <Ionicons name="alert-circle" size={14} color="#FF9800" />
-                    <Text style={[styles.lateFeeText, { color: '#FF9800' }]}>
-                      Late Fee: ₹{fee.late_fee_amount} ({fee.late_fee_days} days × ₹{fee.late_fee_per_day} ) + ₹{fee.amount}
-                    </Text>
-                  </View>
-                )}
-                
-                {fee.paid_amount > 0 && (
-                  <View style={styles.paidInfo}>
-                    <Ionicons name="checkmark-circle" size={14} color="#4CAF50" />
-                    <Text style={[styles.paidText, { color: '#4CAF50' }]}>
-                      Paid: ₹{fee.paid_amount.toLocaleString()} of ₹{fee.amount.toLocaleString()}
-                    </Text>
-                    {fee.payment_method && (
-                      <Text style={[styles.paymentMethod, { color: colors.textSecondary }]}>
-                        via {fee.payment_method}
+                  )}
+                  
+                  {fee.paid_amount > 0 && (
+                    <View style={styles.paidInfo}>
+                      <Ionicons name="checkmark-circle" size={14} color="#4CAF50" />
+                      <Text style={[styles.paidText, { color: '#4CAF50' }]}>
+                        Paid: ₹{fee.paid_amount.toLocaleString()} of ₹{fee.amount.toLocaleString()}
                       </Text>
-                    )}
-                  </View>
-                )}
+                      {fee.payment_method && (
+                        <Text style={[styles.paymentMethod, { color: colors.textSecondary }]}>
+                          via {fee.payment_method}
+                        </Text>
+                      )}
+                    </View>
+                  )}
 
-                {/* Show installment receipts count if any */}
-                {fee.installment_receipts && fee.installment_receipts.length > 0 && (
-                  <View style={styles.installmentInfo}>
-                    <Ionicons name="document-text-outline" size={14} color={colors.textSecondary} />
-                    <Text style={[styles.installmentText, { color: colors.textSecondary }]}>
-                      {fee.installment_receipts.length} installment receipt(s)
-                    </Text>
-                  </View>
-                )}
+                  {/* Show installment receipts count if any */}
+                  {fee.installment_receipts && fee.installment_receipts.length > 0 && (
+                    <View style={styles.installmentInfo}>
+                      <Ionicons name="document-text-outline" size={14} color={colors.textSecondary} />
+                      <Text style={[styles.installmentText, { color: colors.textSecondary }]}>
+                        {fee.installment_receipts.length} installment receipt(s)
+                      </Text>
+                    </View>
+                  )}
 
-                {/* Pay button for individual fee if due */}
-                {fee.due_amount > 0 && (
-                  <TouchableOpacity 
-                    style={[styles.quickPayButton, { backgroundColor: colors.primary }]}
-                    onPress={() => handlePayPress(fee)}
-                  >
-                    <Text style={styles.quickPayButtonText}>Pay ₹{fee.due_amount.toLocaleString()} Now</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            ))}
+                  {/* Pay button for individual fee if due */}
+                  {fee.due_amount > 0 && (
+                    <TouchableOpacity 
+                      style={[
+                        styles.quickPayButton, 
+                        { 
+                          backgroundColor: isDisabled ? colors.textSecondary : colors.primary,
+                          opacity: isDisabled ? 0.7 : 1
+                        }
+                      ]}
+                      onPress={() => handlePaymentBtn(fee)}
+                      disabled={isDisabled}
+                    >
+                      {isProcessing ? (
+                        <View style={styles.buttonLoadingContainer}>
+                          <ActivityIndicator size="small" color="#FFF" />
+                          <Text style={styles.quickPayButtonText}>
+                            {verifyingPayment ? 'Verifying...' : 'Processing...'}
+                          </Text>
+                        </View>
+                      ) : (
+                        <Text style={styles.quickPayButtonText}>
+                          Pay ₹{fee.due_amount.toLocaleString()} Now
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })}
           </View>
-
         </View>
       </ScrollView>
 
-      <FullScreenLoader loading={loading} />
+      {/* Payment Confirmation Modal */}
+      <PaymentConfirmationModal
+        visible={showConfirmModal}
+        onClose={() => {
+          setShowConfirmModal(false);
+          setSelectedFee(null);
+        }}
+        onConfirm={handleConfirmPayment}
+        feeData={selectedFee ? {
+          fee_name: selectedFee.fee_name,
+          amount: selectedFee.amount,
+          due_amount: selectedFee.due_amount,
+          status: selectedFee.status,
+          status_label: selectedFee.status_label,
+        } : null}
+        loading={paymentLoading}
+      />
+
+      {/* Payment Success Modal */}
+      <PaymentSuccessModal
+        visible={showSuccessModal}
+        onClose={handleCloseSuccessModal}
+        paymentData={successPaymentData}
+      />
+
+      {/* Custom Alert Modal */}
+      <CustomAlertModal
+        visible={showAlertModal}
+        type={alertType}
+        message={alertMessage}
+        title={alertTitle}
+        onClose={() => setShowAlertModal(false)}
+        autoDismiss={true}
+        autoDismissTime={30000} // 30 seconds
+      />
+
+      {/* Full Screen Loader for all payment steps */}
+      <FullScreenLoader 
+        loading={paymentLoading || verifyingPayment} 
+        message={
+          paymentLoading ? 'Processing payment...' : 
+          verifyingPayment ? 'Verifying payment...' : 
+          ''
+        }
+      />
     </View>
   );
 };
@@ -340,6 +508,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    marginTop: 8,
   },
   emptyContainer: {
     flex: 1,
@@ -553,11 +726,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
   },
   quickPayButtonText: {
     color: '#FFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+  buttonLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   overdueBadge: {
     paddingHorizontal: 8,

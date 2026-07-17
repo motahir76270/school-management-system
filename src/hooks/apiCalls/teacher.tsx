@@ -297,3 +297,64 @@ export const deteleClassNotes = async(id:any)=>{
         const data = await res.json()
      return data;
 }
+
+export const getAllMarks = async()=>{
+     const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+        const res = await fetch(`${company.BASE_URL}/teacher/marks/exams`,{
+            method:"GET",
+            headers:{
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        
+        const data = await res.json()
+     return data;
+}
+
+export const getEntryMarksApiCall = async(payload:any)=>{
+     const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+        const res = await fetch(`${company.BASE_URL}/teacher/marks/${payload?.examId}/class?class_id=${payload?.classId}&section_id=${payload?.sectionId}`,{
+            method:"GET",
+            headers:{
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        
+        const data = await res.json()
+     return data;
+}
+
+export const classMarksSaveApiCall = async(payload:any,examId:any)=> {
+        const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+        const res = await fetch(`${company.BASE_URL}/teacher/marks/${examId}/class`,{
+            method:"POST",
+            body:JSON.stringify(payload),
+            headers:{
+               'Content-Type':'application/json',
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        
+        const data = await res.json()
+     return data;
+}
+
+export const studentMarksSaveApiCall = async(payload:any,examId:any,studentId:any)=> {
+        const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+        const res = await fetch(`${company.BASE_URL}/teacher/marks/${examId}/student/${studentId}`,{
+            method:"POST",
+            body:JSON.stringify(payload),
+            headers:{
+               'Content-Type':'application/json',
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        
+        const data = await res.json()
+     return data;
+}
+
+
+
+
+

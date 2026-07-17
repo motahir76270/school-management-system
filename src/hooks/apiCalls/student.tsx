@@ -27,7 +27,7 @@ export const getStudentFeeData = async()=> {
             }
         })
         
-        const data = await res.json()
+        const data = await res.json()        
      return data;
 } 
 
@@ -157,4 +157,111 @@ export const getStudentClassNotesList = async(subjectId:any)=>{
         const data = await res.json()
      return data;
 }
+
+export const  intiateTransaction = async(id:any)=>{
+    const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+        const res = await fetch(`${company.BASE_URL}/student/fees/${id}/pay`,{
+            method:"POST",
+            headers:{
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        
+        const data = await res.json()
+     return data;
+}
+
+export const  varifyTransaction = async(id:any,payload:any)=>{
+    const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+        const res = await fetch(`${company.BASE_URL}/student/fees/${id}/verify`,{
+            method:"POST",
+            body:JSON.stringify(payload),
+            headers:{
+                "Content-Type":'application/json',
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        
+        const data = await res.json()
+     return data;
+}
+
+export const getAllStudentsReports = async()=>{
+     const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+        const res = await fetch(`${company.BASE_URL}/student/report-cards`,{
+            method:"GET",
+            headers:{
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        
+        const data = await res.json()
+     return data;
+}
+
+export const getStudentsReportsById = async(id:any)=>{
+     const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+        const res = await fetch(`${company.BASE_URL}/student/report-cards/${id}`,{
+            method:"GET",
+            headers:{
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        
+        const data = await res.json()
+     return data;
+}
+
+export const getAllStudentsAdminCrads = async()=>{
+     const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+        const res = await fetch(`${company.BASE_URL}/student/admit-cards`,{
+            method:"GET",
+            headers:{
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        
+        const data = await res.json()
+     return data;
+}
+
+export const getStudentsAdminCArdById = async(id:any)=>{
+     const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+        const res = await fetch(`${company.BASE_URL}/student/admit-cards/${id}`,{
+            method:"GET",
+            headers:{
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        
+        const data = await res.json()
+     return data;
+}
+
+export const getStudentsAdminCardPdfById = async(id:any)=>{
+     const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+        const res = await fetch(`${company.BASE_URL}/student/admit-cards/${id}/print`,{
+            method:"GET",
+            headers:{ 
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        
+     return res;
+}
+
+export const getStudentResults = async()=>{
+     const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+        const res = await fetch(`${company.BASE_URL}/student/results`,{
+            method:"GET",
+            headers:{
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        
+        const data = await res.json()
+     return data;
+}
+
+
 
