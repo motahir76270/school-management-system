@@ -12,7 +12,6 @@ interface ServiceItem {
   screen: string;
 }
 
-
 const services: ServiceItem[] = [
   // { id: '1', title: 'My Classes', image: images.classes, screen: '/screens/features/myClasses' },
   { id: '2', title: 'Attendance', image: images.attendance, screen: '/screens/features/myAttendance' },
