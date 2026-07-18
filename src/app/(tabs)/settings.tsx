@@ -170,14 +170,7 @@ const handleLogoutBtn = async () => {
             hasArrow={true}
           />
           <View style={styles.divider} />
-          <SettingItem
-            title="Reports Card"
-            icon="document-text-outline"
-            iconType="Ionicons"
-            screen="/screens/settings/reportCard"
-            hasArrow={true}
-          />
-    
+  
         </View>
       </View>
 
@@ -259,21 +252,13 @@ const handleLogoutBtn = async () => {
           />
           <View style={styles.divider} />
           <SettingItem
-            title="Terms of Service"
+            title="Terms & Conditions"
             icon="document-text-outline"
             iconType="Ionicons"
             screen="/screens/settings/terms"
             hasArrow={true}
           />
-          <View style={styles.divider} />
 
-          <SettingItem
-            title="Help Center"
-            icon="help-circle-outline"
-            iconType="Ionicons"
-            screen="/screens/settings/helpCenter"
-            hasArrow={true}
-          />
           <View style={styles.divider} />
           <SettingItem
             title="Contact Support"

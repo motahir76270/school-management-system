@@ -47,8 +47,8 @@ export default function RootLayout() {
         <Stack.Screen name='screens/features/leaves' />
         <Stack.Screen name='screens/features/myAttendance' />
 
-        <Stack.Screen name='screens/features/exams/page' />
-        <Stack.Screen name='screens/features/exams/classExams/[id]' />
+        <Stack.Screen name='screens/features/marksEntry/page' />
+        <Stack.Screen name='screens/features/marksEntry/classExams/[id]' />
 
         <Stack.Screen name='screens/features/fees/feeStructure' />
         <Stack.Screen name='screens/features/fees/feeReceipts' />
