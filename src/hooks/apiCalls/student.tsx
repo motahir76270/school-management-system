@@ -186,6 +186,8 @@ export const  varifyTransaction = async(id:any,payload:any)=>{
      return data;
 }
 
+<<<<<<< HEAD
+=======
 export const getAllStudentsReports = async()=>{
      const token = JSON.parse(await AsyncStorage.getItem("token") as any)
         const res = await fetch(`${company.BASE_URL}/student/report-cards`,{
@@ -265,3 +267,4 @@ export const getStudentResults = async()=>{
 
 
 
+>>>>>>> 6266e1af86fd3a2df8d4290e452c6170c838dcbc

@@ -162,7 +162,7 @@ const handleLogoutBtn = async () => {
             hasArrow={true}
           />
           <View style={styles.divider} />
-          <SettingItem
+          {/* <SettingItem
             title="Exam Schedule"
             icon="calendar-outline"
             iconType="Ionicons"
@@ -170,7 +170,18 @@ const handleLogoutBtn = async () => {
             hasArrow={true}
           />
           <View style={styles.divider} />
+<<<<<<< HEAD
   
+=======
+          <SettingItem
+            title="Reports Card"
+            icon="document-text-outline"
+            iconType="Ionicons"
+            screen="/screens/settings/reportCard"
+            hasArrow={true}
+          /> */}
+    
+>>>>>>> 35f073c0855a7e390a0b712debbea56d1f9f13c7
         </View>
       </View>
 
@@ -252,13 +263,21 @@ const handleLogoutBtn = async () => {
           />
           <View style={styles.divider} />
           <SettingItem
+<<<<<<< HEAD
             title="Terms & Conditions"
+=======
+            title="Terms & Condtions"
+>>>>>>> 35f073c0855a7e390a0b712debbea56d1f9f13c7
             icon="document-text-outline"
             iconType="Ionicons"
             screen="/screens/settings/terms"
             hasArrow={true}
           />
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> 35f073c0855a7e390a0b712debbea56d1f9f13c7
           <View style={styles.divider} />
           <SettingItem
             title="Contact Support"
