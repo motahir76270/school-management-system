@@ -594,6 +594,7 @@
         <PersistentDeviceSelectionData>
           <option name="api" value="36" />
           <option name="brand" value="samsung" />
+<<<<<<< HEAD
           <option name="codename" value="b0qksx" />
           <option name="id" value="b0qksx" />
           <option name="labId" value="google" />
@@ -606,6 +607,8 @@
         <PersistentDeviceSelectionData>
           <option name="api" value="36" />
           <option name="brand" value="samsung" />
+=======
+>>>>>>> 6266e1af86fd3a2df8d4290e452c6170c838dcbc
           <option name="codename" value="b4qsqw" />
           <option name="id" value="b4qsqw" />
           <option name="labId" value="google" />
@@ -713,6 +716,7 @@
           <option name="screenY" value="3088" />
         </PersistentDeviceSelectionData>
         <PersistentDeviceSelectionData>
+<<<<<<< HEAD
           <option name="api" value="33" />
           <option name="brand" value="samsung" />
           <option name="codename" value="c2qksw" />
@@ -725,6 +729,8 @@
           <option name="screenY" value="3088" />
         </PersistentDeviceSelectionData>
         <PersistentDeviceSelectionData>
+=======
+>>>>>>> 6266e1af86fd3a2df8d4290e452c6170c838dcbc
           <option name="api" value="34" />
           <option name="brand" value="google" />
           <option name="codename" value="caiman" />
@@ -1134,6 +1140,7 @@
           <option name="screenY" value="1600" />
         </PersistentDeviceSelectionData>
         <PersistentDeviceSelectionData>
+<<<<<<< HEAD
           <option name="api" value="31" />
           <option name="brand" value="samsung" />
           <option name="codename" value="gta4lwifi" />
@@ -1146,6 +1153,8 @@
           <option name="screenY" value="2000" />
         </PersistentDeviceSelectionData>
         <PersistentDeviceSelectionData>
+=======
+>>>>>>> 6266e1af86fd3a2df8d4290e452c6170c838dcbc
           <option name="api" value="34" />
           <option name="brand" value="samsung" />
           <option name="codename" value="gta9pwifi" />

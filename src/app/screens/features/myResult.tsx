@@ -1,42 +1,132 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useColorScheme, Alert } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import HeaderSection from '@/components/features/header';
+import { getStudentResults } from '@/hooks/apiCalls/student';
+import { useDispatch, useSelector } from 'react-redux';
+import { FullScreenLoader } from '@/hooks/use-screensLoder';
 
-interface Result {
-  id: string;
-  subject: string;
-  examType: string;
-  totalMarks: number;
-  obtainedMarks: number;
-  percentage: number;
+// Updated interface to match API response
+interface SubjectResult {
+  subject_id: string;
+  subject_name: string;
+  theory_marks: number;
+  practical_marks: number;
+  internal_marks: number;
+  marks_obtained: number;
+  max_marks: number;
   grade: string;
-  status: 'pass' | 'fail';
+  is_absent: boolean;
+  display_total: string;
+  subject_remarks: string | null;
+}
+
+interface ExamResult {
+  exam_id: string;
+  exam_name: string;
+  exam_type: string;
+  type_label: string;
+  start_date: string;
+  end_date: string;
+  summary: {
+    percentage: number;
+    grade: string;
+    status: string;
+    subjects_total: number;
+    subjects_entered: number;
+    is_complete: boolean;
+    total_obtained: number;
+    total_max: number;
+    attendance_rate: number;
+    remarks: string | null;
+    rank: number;
+  };
+  subjects: SubjectResult[];
 }
 
 const MyResult = () => {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
-  const [selectedExam, setSelectedExam] = useState('Mid Term 2024');
+  const [selectedExamId, setSelectedExamId] = useState<string>('');
+  const [selectedExam, setSelectedExam] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [examResults, setExamResults] = useState<ExamResult[]>([]);
+  const dispatch = useDispatch();
+  const { resultData } = useSelector((state: any) => state.student);
 
-  const results: Result[] = [
-    { id: '1', subject: 'Mathematics', examType: 'Mid Term 2024', totalMarks: 100, obtainedMarks: 85, percentage: 85, grade: 'A', status: 'pass' },
-    { id: '2', subject: 'Physics', examType: 'Mid Term 2024', totalMarks: 100, obtainedMarks: 78, percentage: 78, grade: 'B+', status: 'pass' },
-    { id: '3', subject: 'Chemistry', examType: 'Mid Term 2024', totalMarks: 100, obtainedMarks: 82, percentage: 82, grade: 'A-', status: 'pass' },
-    { id: '4', subject: 'English', examType: 'Mid Term 2024', totalMarks: 100, obtainedMarks: 88, percentage: 88, grade: 'A', status: 'pass' },
-    { id: '5', subject: 'Computer Science', examType: 'Mid Term 2024', totalMarks: 100, obtainedMarks: 92, percentage: 92, grade: 'A+', status: 'pass' },
-  ];
-
-  const overallPercentage = results.reduce((sum, sub) => sum + sub.percentage, 0) / results.length;
-  const overallGrade = overallPercentage >= 90 ? 'A+' : overallPercentage >= 80 ? 'A' : overallPercentage >= 70 ? 'B+' : overallPercentage >= 60 ? 'B' : 'C';
+  // Get current selected exam data
+  const currentExam = examResults.find(exam => exam.exam_id === selectedExamId) || examResults[0];
+  
+  // Get subjects for current exam
+  const subjects: SubjectResult[] = currentExam?.subjects || [];
+  
+  // Get summary for current exam
+  const summary = currentExam?.summary;
 
   const getGradeColor = (grade: string) => {
-    if (grade === 'A+') return '#4CAF50';
-    if (grade === 'A') return '#8BC34A';
-    if (grade === 'A-') return '#CDDC39';
-    if (grade === 'B+') return '#FFC107';
-    return '#FF9800';
+    if (!grade) return '#6c757d';
+    const gradeMap: { [key: string]: string } = {
+      'A+': '#4CAF50',
+      'A': '#8BC34A',
+      'A-': '#CDDC39',
+      'B+': '#FFC107',
+      'B': '#FF9800',
+      'C+': '#FF5722',
+      'C': '#f44336',
+      'D': '#e91e63',
+      'F': '#9e9e9e'
+    };
+    return gradeMap[grade] || '#6c757d';
+  };
+
+  const getStatusColor = (status: string) => {
+    return status?.toLowerCase() === 'pass' ? '#4CAF50' : '#f44336';
+  };
+
+  const fetchResultData = async () => {
+    try {
+      setLoading(true);
+      const res = await getStudentResults();
+      
+      if (res?.success === true && res?.results) {
+        setExamResults(res.results);
+        // Set first exam as selected by default
+        if (res.results.length > 0) {
+          setSelectedExamId(res.results[0].exam_id);
+          setSelectedExam(res.results[0].exam_name);
+        }
+      } else {
+        Alert.alert("Failed", res?.message || "No results found");
+      }
+    } catch (error: any) {
+      Alert.alert("Failed", error?.message || "Server not responding! Please check internet connection");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchResultData();
+  }, []);
+
+  // Handle exam navigation
+  const handlePreviousExam = () => {
+    const currentIndex = examResults.findIndex(exam => exam.exam_id === selectedExamId);
+    if (currentIndex > 0) {
+      const prevExam = examResults[currentIndex - 1];
+      setSelectedExamId(prevExam.exam_id);
+      setSelectedExam(prevExam.exam_name);
+    }
+  };
+
+  const handleNextExam = () => {
+    const currentIndex = examResults.findIndex(exam => exam.exam_id === selectedExamId);
+    if (currentIndex < examResults.length - 1) {
+      const nextExam = examResults[currentIndex + 1];
+      setSelectedExamId(nextExam.exam_id);
+      setSelectedExam(nextExam.exam_name);
+    }
   };
 
   return (
@@ -50,67 +140,124 @@ const MyResult = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.content}>
-          <View style={[styles.overallCard, { backgroundColor: colors.card }]}>
-            <Text style={[styles.overallLabel, { color: colors.textSecondary }]}>Overall Performance</Text>
-            <Text style={[styles.overallPercentage, { color: getGradeColor(overallGrade) }]}>
-              {overallPercentage.toFixed(1)}%
-            </Text>
-            <View style={styles.gradeContainer}>
-              <Text style={[styles.overallGrade, { color: getGradeColor(overallGrade) }]}>
-                Grade: {overallGrade}
-              </Text>
-            </View>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: `${overallPercentage}%`, backgroundColor: getGradeColor(overallGrade) }]} />
-            </View>
-          </View>
-
-          <View style={styles.examSelector}>
-            <TouchableOpacity>
-              <Ionicons name="chevron-back" size={24} color={colors.primary} />
-            </TouchableOpacity>
-            <Text style={[styles.examText, { color: colors.text }]}>{selectedExam}</Text>
-            <TouchableOpacity>
-              <Ionicons name="chevron-forward" size={24} color={colors.primary} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.subjectHeader}>
-            <Text style={[styles.headerText, { color: colors.text }]}>Subject</Text>
-            <Text style={[styles.headerText, { color: colors.text }]}>Marks</Text>
-            <Text style={[styles.headerText, { color: colors.text }]}>Grade</Text>
-          </View>
-
-          {results.map((result) => (
-            <View key={result.id} style={[styles.resultCard, { backgroundColor: colors.card }]}>
-              <View style={styles.resultRow}>
-                <Text style={[styles.subjectName, { color: colors.text }]}>{result.subject}</Text>
-                <Text style={[styles.marks, { color: colors.text }]}>
-                  {result.obtainedMarks}/{result.totalMarks}
+          {currentExam && summary && (
+            <>
+              <View style={[styles.overallCard, { backgroundColor: colors.card }]}>
+                <Text style={[styles.overallLabel, { color: colors.textSecondary }]}>Overall Performance</Text>
+                <Text style={[styles.overallPercentage, { color: getGradeColor(summary.grade) }]}>
+                  {summary.percentage.toFixed(1)}%
                 </Text>
-                <Text style={[styles.grade, { color: getGradeColor(result.grade) }]}>{result.grade}</Text>
-              </View>
-              <View style={styles.resultDetails}>
-                <View style={styles.percentageContainer}>
-                  <Text style={[styles.percentageText, { color: colors.textSecondary }]}>
-                    {result.percentage}%
+                <View style={styles.gradeContainer}>
+                  <Text style={[styles.overallGrade, { color: getGradeColor(summary.grade) }]}>
+                    Grade: {summary.grade}
+                  </Text>
+                  <Text style={[styles.statusText, { color: getStatusColor(summary.status) }]}>
+                    {summary.status}
                   </Text>
                 </View>
-                <View style={styles.progressBarSmall}>
-                  <View style={[styles.progressFillSmall, { width: `${result.percentage}%`, backgroundColor: getGradeColor(result.grade) }]} />
+                <View style={styles.summaryDetails}>
+                  <Text style={[styles.summaryText, { color: colors.textSecondary }]}>
+                    Total: {summary.total_obtained}/{summary.total_max}
+                  </Text>
+                  <Text style={[styles.summaryText, { color: colors.textSecondary }]}>
+                    Rank: #{summary.rank}
+                  </Text>
+                </View>
+                <View style={styles.progressBar}>
+                  <View style={[styles.progressFill, { width: `${summary.percentage}%`, backgroundColor: getGradeColor(summary.grade) }]} />
                 </View>
               </View>
-            </View>
-          ))}
 
-          <View style={styles.remarksSection}>
-            <Text style={[styles.remarksTitle, { color: colors.text }]}>Remarks</Text>
-            <Text style={[styles.remarksText, { color: colors.textSecondary }]}>
-              Excellent performance! Keep up the good work. Your improvement in Mathematics is notable.
-            </Text>
-          </View>
+              <View style={styles.examSelector}>
+                <TouchableOpacity 
+                  onPress={handlePreviousExam}
+                  disabled={examResults.findIndex(exam => exam.exam_id === selectedExamId) === 0}
+                >
+                  <Ionicons 
+                    name="chevron-back" 
+                    size={24} 
+                    color={examResults.findIndex(exam => exam.exam_id === selectedExamId) === 0 ? colors.textSecondary : colors.primary} 
+                  />
+                </TouchableOpacity>
+                <View style={styles.examInfo}>
+                  <Text style={[styles.examText, { color: colors.text }]}>{selectedExam}</Text>
+                  <Text style={[styles.examTypeText, { color: colors.textSecondary }]}>{currentExam.type_label}</Text>
+                  <Text style={[styles.examDateText, { color: colors.textSecondary }]}>
+                    {currentExam.start_date} - {currentExam.end_date}
+                  </Text>
+                </View>
+                <TouchableOpacity 
+                  onPress={handleNextExam}
+                  disabled={examResults.findIndex(exam => exam.exam_id === selectedExamId) === examResults.length - 1}
+                >
+                  <Ionicons 
+                    name="chevron-forward" 
+                    size={24} 
+                    color={examResults.findIndex(exam => exam.exam_id === selectedExamId) === examResults.length - 1 ? colors.textSecondary : colors.primary} 
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.subjectHeader}>
+                <Text style={[styles.headerText, { color: colors.text }]}>Subject</Text>
+                <Text style={[styles.headerText, { color: colors.text }]}>Marks</Text>
+                <Text style={[styles.headerText, { color: colors.text }]}>Grade</Text>
+              </View>
+
+              {subjects.map((subject) => (
+                <View key={subject.subject_id} style={[styles.resultCard, { backgroundColor: colors.card }]}>
+                  <View style={styles.resultRow}>
+                    <Text style={[styles.subjectName, { color: colors.text }]}>{subject.subject_name}</Text>
+                    <Text style={[styles.marks, { color: colors.text }]}>
+                      {subject.marks_obtained}/{subject.max_marks}
+                    </Text>
+                    <Text style={[styles.grade, { color: getGradeColor(subject.grade) }]}>{subject.grade}</Text>
+                  </View>
+                  <View style={styles.resultDetails}>
+                    <View style={styles.percentageContainer}>
+                      <Text style={[styles.percentageText, { color: colors.textSecondary }]}>
+                        {(subject.marks_obtained / subject.max_marks * 100).toFixed(1)}%
+                      </Text>
+                      {subject.is_absent && (
+                        <Text style={[styles.absentText, { color: '#f44336' }]}> (Absent)</Text>
+                      )}
+                    </View>
+                    <View style={styles.marksBreakdown}>
+                      <Text style={[styles.breakdownText, { color: colors.textSecondary }]}>
+                        Theory: {subject.theory_marks} | Practical: {subject.practical_marks} | Internal: {subject.internal_marks}
+                      </Text>
+                    </View>
+                    <View style={styles.progressBarSmall}>
+                      <View style={[styles.progressFillSmall, { 
+                        width: `${(subject.marks_obtained / subject.max_marks * 100)}%`, 
+                        backgroundColor: getGradeColor(subject.grade) 
+                      }]} />
+                    </View>
+                  </View>
+                </View>
+              ))}
+
+              {summary.remarks && (
+                <View style={styles.remarksSection}>
+                  <Text style={[styles.remarksTitle, { color: colors.text }]}>Remarks</Text>
+                  <Text style={[styles.remarksText, { color: colors.textSecondary }]}>
+                    {summary.remarks}
+                  </Text>
+                </View>
+              )}
+            </>
+          )}
+
+          {examResults.length === 0 && !loading && (
+            <View style={styles.emptyState}>
+              <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
+                No results available
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
+      <FullScreenLoader loading={loading} />
     </View>
   );
 };
@@ -120,10 +267,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContainer: {
-    flex: 1,
+    flex: 1
   },
   content: {
-    paddingBottom: 20, // Add padding at bottom for better scrolling experience
+    paddingBottom: 120,
   },
   overallCard: {
     margin: 15,
@@ -147,11 +294,27 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   gradeContainer: {
-    marginBottom: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 10,
   },
   overallGrade: {
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  statusText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  summaryDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: 10,
+  },
+  summaryText: {
+    fontSize: 14,
   },
   examSelector: {
     flexDirection: 'row',
@@ -160,9 +323,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginVertical: 10,
   },
+  examInfo: {
+    alignItems: 'center',
+    flex: 1,
+  },
   examText: {
     fontSize: 18,
     fontWeight: '600',
+  },
+  examTypeText: {
+    fontSize: 14,
+    marginTop: 2,
+  },
+  examDateText: {
+    fontSize: 12,
+    marginTop: 2,
   },
   subjectHeader: {
     flexDirection: 'row',
@@ -212,10 +387,22 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   percentageContainer: {
-    marginBottom: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
   },
   percentageText: {
     fontSize: 12,
+  },
+  absentText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  marksBreakdown: {
+    marginBottom: 8,
+  },
+  breakdownText: {
+    fontSize: 11,
   },
   progressBar: {
     height: 10,
@@ -252,6 +439,15 @@ const styles = StyleSheet.create({
   remarksText: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyStateText: {
+    fontSize: 16,
   },
 });
 
