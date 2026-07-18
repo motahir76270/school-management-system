@@ -8,12 +8,8 @@ import {
   StyleSheet,
   Linking,
   Alert,
-  Platform,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { File, Directory, Paths } from 'expo-file-system'
-import * as Haptics from 'expo-haptics'
-import * as Sharing from 'expo-sharing'
 
 interface ViewClassNotesModalProps {
   visible: boolean
@@ -326,7 +322,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '90%',
-    minHeight: '70%',
+    minHeight: '85%',
   },
   modalHeader: {
     flexDirection: 'row',

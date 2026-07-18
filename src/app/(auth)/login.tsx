@@ -25,6 +25,7 @@ import { FullScreenLoader } from "@/hooks/use-screensLoder";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/redux/authSlice";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import CustomAlertModal from "@/components/modal/CustomAlertModal";
 
 type LoginFormData = z.infer<typeof AuthValiation.loginSchema>;
 
@@ -34,6 +35,12 @@ export default function LoginScreen({ navigation }: any) {
   const [loading, setLoading] = useState(false);
   const [loginType, setLoginType] = useState<"student" | "teacher">("student");
   const dispatch = useDispatch();
+
+  // Alert states
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [alertType, setAlertType] = useState<any>("success");
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertTitle, setAlertTitle] = useState("");
 
   const scheme = useColorScheme();
   const colors = Colors[scheme === "unspecified" ? "light" : scheme];
@@ -51,6 +58,14 @@ export default function LoginScreen({ navigation }: any) {
       password: "",
     },
   });
+
+  // Show alert helper
+  const showAlert = (type: any, message: string, title?: string) => {
+    setAlertType(type);
+    setAlertMessage(message);
+    setAlertTitle(title || "");
+    setShowAlertModal(true);
+  };
 
   const onSubmit = async (data: LoginFormData) => {
     setLoading(true);
@@ -71,13 +86,12 @@ export default function LoginScreen({ navigation }: any) {
         const payload = {
           login_type: loginType,
           student_id: data.email,
-          date_of_birth: data.password, // Assuming password field contains DOB for students
+          date_of_birth: data.password,
           device_name: Device?.deviceName || "mobile",
         };
         res = await LoginApiCall(payload);
       }
     
-       
       if (res?.success === true) {
         await AsyncStorage.setItem("token", JSON.stringify(res?.token));
         await AsyncStorage.setItem("user", JSON.stringify(res));
@@ -85,12 +99,15 @@ export default function LoginScreen({ navigation }: any) {
         dispatch(setUser(parsedUser?.user));
         router.replace('/(tabs)');
       } else {
-        Alert.alert("Login Failed", res?.message || "Invalid credentials. Please try again.");
+        // Replace Alert.alert with showAlert
+        showAlert("failed", res?.message || "Invalid credentials. Please try again.", "Login Failed");
       }
     } catch (error: any) {
       setError("root", {
         message: error?.message || "Network error. Please check your connection.",
       });
+      // Replace Alert.alert with showAlert
+      showAlert("warning", error?.message || "Network error. Please check your connection.", "Connection Error");
     } finally {
       setLoading(false);
     }
@@ -332,7 +349,19 @@ export default function LoginScreen({ navigation }: any) {
           </View>
         </View>
       </ScrollView>
+      
       <FullScreenLoader loading={loading} />
+      
+      {/* Custom Alert Modal */}
+      <CustomAlertModal
+        visible={showAlertModal}
+        type={alertType}
+        message={alertMessage}
+        title={alertTitle}
+        onClose={() => setShowAlertModal(false)}
+        autoDismiss={true}
+        autoDismissTime={5000} // 5 seconds
+      />
     </View>
   );
 }

@@ -1,9 +1,10 @@
 import * as Device from 'expo-device';
 import { 
-  StyleSheet, View, ScrollView, RefreshControl, Alert } from 'react-native';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+  StyleSheet, View, FlatList, RefreshControl, Alert, ActivityIndicator 
+} from 'react-native';
+import { BottomTabInset, Spacing, MaxContentWidth } from '@/constants/theme';
 import Navbar from '@/components/home/navbar/navbar';
-import {  router } from 'expo-router';
+import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -15,105 +16,176 @@ import StudentScheduleSection from '@/components/home/sections/studentScheduleSe
 import TeacherFeatureSection from '@/components/home/sections/teacherFeatures';
 import TechaerScheduleSection from '@/components/home/sections/teacherScheduleSection';
 import PostSections from '@/components/home/sections/postSections';
+import CustomAlertModal from '@/components/modal/CustomAlertModal';
 
 export default function HomeScreen() {
   const { user } = useSelector((state: any) => state.auth);
   const dispatch = useDispatch();
   const [refreshing, setRefreshing] = useState(false);
-    
-  // Your data loading function
-  const loadData = async () => {
-    const parsedUser = JSON.parse( await AsyncStorage.getItem("user") as any)
-    if(parsedUser?.user?.role === "teacher"){
-      await getTeacherProfile(dispatch);
-      await getTeacherTimeTable(dispatch);
-      await getTeacherPostData(dispatch)
-    }else {
-      await getStudentProfile(dispatch)
-       await getStudentTimeTable(dispatch);
-      await getStudentPostData(dispatch)
-    }
+  const [loading, setLoading] = useState(true);
+  
+  // Alert states
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [alertType, setAlertType] = useState<any>('success');
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertTitle, setAlertTitle] = useState('');
+
+  // Show alert helper
+  const showAlert = (type: any, message: string, title?: string) => {
+    setAlertType(type);
+    setAlertMessage(message);
+    setAlertTitle(title || '');
+    setShowAlertModal(true);
   };
 
- 
+  // Your data loading function
+  const loadData = async () => {
+    try {
+      const parsedUser = JSON.parse(await AsyncStorage.getItem("user") as any);
+      if (parsedUser?.user?.role === "teacher") {
+        await getTeacherProfile(dispatch);
+        await getTeacherTimeTable(dispatch);
+        await getTeacherPostData(dispatch);
+      } else {
+        await getStudentProfile(dispatch);
+        await getStudentTimeTable(dispatch);
+        await getStudentPostData(dispatch);
+      }
+      return true;
+    } catch (error) {
+      showAlert('failed', 'Failed to load data. Please try again.', 'Error');
+      return false;
+    }
+  };
 
   // Pull to refresh handler
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       const token = JSON.parse(await AsyncStorage.getItem("token") as any);
-       console.log("Token retrieved on refresh:", token); // Debugging line
+      console.log("Token retrieved on refresh:", token);
       if (!token) {
         router.replace("/(auth)/initial");
+        return;
       }
-      await loadData(); // Call your data loading function only on pull
+      await loadData();
     } catch (error) {
-        Alert.alert("Warning", "Server not respose! Please check internet connections")
+      showAlert('warning', 'Server not responding! Please check internet connection.', 'Warning');
     } finally {
       setRefreshing(false);
     }
   }, []);
 
+  // Initial load
   useEffect(() => {
-    // Only check authentication on mount, don't call loadData
-    const checkAuth = async () => {
+    const initializeApp = async () => {
+      setLoading(true);
       try {
-        const parsedUser = JSON.parse(await AsyncStorage.getItem("token") as any);
-        if (!parsedUser) {
+        const token = JSON.parse(await AsyncStorage.getItem("token") as any);
+        if (!token) {
           router.replace("/(auth)/initial");
-        }else{
-          await loadData();
+          setLoading(false);
+          return;
         }
+        await loadData();
       } catch (error) {
-        console.error('Auth check error:', error);
+        console.error('Initialization error:', error);
+        showAlert('failed', 'Failed to initialize app. Please restart.', 'Error');
+      } finally {
+        setLoading(false);
       }
     };
-    checkAuth();
-  }, []); // Empty dependency array - runs only once on mount
+    initializeApp();
+  }, []);
+
+  // Render each section
+  const renderSection = ({ item, index }: { item: string; index: number }) => {
+    switch (item) {
+      case 'navbar':
+        return <Navbar />;
+      case 'features':
+        return user?.role === "teacher" ? 
+          <TeacherFeatureSection /> : 
+          <StudentFeatureSection />;
+      case 'schedule':
+        return user?.role === "teacher" ? 
+          <TechaerScheduleSection /> : 
+          <StudentScheduleSection />;
+      case 'posts':
+        return <PostSections />;
+      default:
+        return null;
+    }
+  };
+
+  // Define sections order
+  const sections = ['navbar', 'features', 'posts'];
+
+  // Show loading screen while initializing
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-
-      <ScrollView 
-        style={styles.safeArea}
+      <FlatList
+        data={sections}
+        renderItem={renderSection}
+        keyExtractor={(item, index) => `${item}-${index}`}
+        contentContainerStyle={styles.flatListContent}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#007AFF']} // iOS
-            tintColor="#007AFF" // iOS
-            progressBackgroundColor="#ffffff" // Android
-            title="Pull to refresh" // iOS
-            titleColor="#007AFF" // iOS
+            colors={['#007AFF']}
+            tintColor="#007AFF"
+            progressBackgroundColor="#ffffff"
+            title="Pull to refresh"
+            titleColor="#007AFF"
           />
         }
-      >
-        <Navbar />
-        { user?.role === "teacher" ?
-        <>
-         <TeacherFeatureSection />
-         {/* <TechaerScheduleSection />:  */}
-        </>
-         :
-         <> 
-         <StudentFeatureSection />
-         {/* <StudentScheduleSection /> */}
-         </>
-          }
+        // Important: Disable nested scrolling warnings
+        removeClippedSubviews={false}
+        // Performance optimizations
+        initialNumToRender={3}
+        maxToRenderPerBatch={3}
+        windowSize={5}
+      />
 
-          <PostSections />
-      </ScrollView>
+      {/* Custom Alert Modal */}
+      <CustomAlertModal
+        visible={showAlertModal}
+        type={alertType}
+        message={alertMessage}
+        title={alertTitle}
+        onClose={() => setShowAlertModal(false)}
+        autoDismiss={true}
+        autoDismissTime={10000}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
+    flex: 1,
+    backgroundColor: '#F5F5F5',
   },
-  safeArea: {
-    gap: Spacing.three,
+  flatListContent: {
     paddingBottom: BottomTabInset + Spacing.three,
     maxWidth: MaxContentWidth,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
   },
 });

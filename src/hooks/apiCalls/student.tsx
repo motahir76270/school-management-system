@@ -27,7 +27,7 @@ export const getStudentFeeData = async()=> {
             }
         })
         
-        const data = await res.json()
+        const data = await res.json()        
      return data;
 } 
 
@@ -150,6 +150,34 @@ export const getStudentClassNotesList = async(subjectId:any)=>{
         const res = await fetch(`${company.BASE_URL}/student/class-notes?subject_id=${subjectId}`,{
             method:"GET",
             headers:{
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        
+        const data = await res.json()
+     return data;
+}
+
+export const  intiateTransaction = async(id:any)=>{
+    const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+        const res = await fetch(`${company.BASE_URL}/student/fees/${id}/pay`,{
+            method:"POST",
+            headers:{
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        
+        const data = await res.json()
+     return data;
+}
+
+export const  varifyTransaction = async(id:any,payload:any)=>{
+    const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+        const res = await fetch(`${company.BASE_URL}/student/fees/${id}/verify`,{
+            method:"POST",
+            body:JSON.stringify(payload),
+            headers:{
+                "Content-Type":'application/json',
                 Authorization: `Bearer ${token}`,
             }
         })

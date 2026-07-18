@@ -14,13 +14,13 @@ interface ServiceItem {
 
 
 const services: ServiceItem[] = [
-  { id: '1', title: 'My Classes', image: images.classes, screen: '/screens/features/myClasses' },
+  // { id: '1', title: 'My Classes', image: images.classes, screen: '/screens/features/myClasses' },
   { id: '2', title: 'Attendance', image: images.attendance, screen: '/screens/features/myAttendance' },
-  { id: '3', title: 'Home Work', image: images.work, screen: '/screens/features/homeWork' },
+  // { id: '3', title: 'Home Work', image: images.work, screen: '/screens/features/homeWork' },
   { id: '4', title: 'Assignment', image: images.assignment, screen: '/screens/features/assignment' },
   { id: '5', title: 'FEES', image: images.payFee, screen: '/screens/features/fees/feeStructure' },
-  { id: '6', title: 'My Result', image: images.result, screen: '/screens/features/myResult' },
-  { id: '7', title: 'Exams', image: images.exams, screen: '/screens/features/exams' },
+  // { id: '6', title: 'My Result', image: images.result, screen: '/screens/features/myResult' },
+  // { id: '7', title: 'Exams', image: images.exams, screen: '/screens/features/exams' },
   { id: '8', title: 'Time Table', image: images.timeTable, screen: '/screens/features/timeTable' }, 
   { id: '9', title: 'Leave', image: images.leaves, screen: '/screens/features/leaves' }, 
 ];
