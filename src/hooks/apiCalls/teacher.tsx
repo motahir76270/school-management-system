@@ -218,141 +218,143 @@ export const requestTeacherLeave = async (payload: any) => {
   return data;
 };
 
-export const getTeacherNoticeData = async()=> { 
-  const token = JSON.parse(await AsyncStorage.getItem("token") as any)
-        const res = await fetch(`${company.BASE_URL}/teacher/notices`,{
-            method:"GET",
-            headers:{
-                Authorization: `Bearer ${token}`,
-            }
-        })
-        
-        const data = await res.json()
-     return data;
-} 
 
-export const getTeacherHolidayData = async()=> { 
-  const token = JSON.parse(await AsyncStorage.getItem("token") as any)
-        const res = await fetch(`${company.BASE_URL}/teacher/holidays`,{
-            method:"GET",
-            headers:{
-                Authorization: `Bearer ${token}`,
-            }
-        })
-        
-        const data = await res.json()
-     return data;
-} 
 
-export const getTecaherClassNotesOption = async()=>{
-     const token = JSON.parse(await AsyncStorage.getItem("token") as any)
-        const res = await fetch(`${company.BASE_URL}/teacher/class-notes/classes`,{
-            method:"GET",
-            headers:{
-                Authorization: `Bearer ${token}`,
-            }
-        })
+// export const getTeacherNoticeData = async()=> { 
+//   const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+//         const res = await fetch(`${company.BASE_URL}/teacher/notices`,{
+//             method:"GET",
+//             headers:{
+//                 Authorization: `Bearer ${token}`,
+//             }
+//         })
         
-        const data = await res.json()
-     return data;
-}
+//         const data = await res.json()
+//      return data;
+// } 
 
-export const getTecaherClassNotesList = async(payload:any)=>{
-     const token = JSON.parse(await AsyncStorage.getItem("token") as any)
-        const res = await fetch(`${company.BASE_URL}/teacher/class-notes?school_class_id=${payload?.school_class_id}&section_id=${payload?.section_id}&subject_id=${payload?.subject_id}`,{
-            method:"GET",
-            headers:{
-                Authorization: `Bearer ${token}`,
-            }
-        })
+// export const getTeacherHolidayData = async()=> { 
+//   const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+//         const res = await fetch(`${company.BASE_URL}/teacher/holidays`,{
+//             method:"GET",
+//             headers:{
+//                 Authorization: `Bearer ${token}`,
+//             }
+//         })
         
-        const data = await res.json()
-     return data;
-}
+//         const data = await res.json()
+//      return data;
+// } 
 
-export const createClassNotes = async(payload:any) => {
-      const token = JSON.parse(await AsyncStorage.getItem("token") as any)
-        const res = await fetch(`${company.BASE_URL}/teacher/class-notes`,{
-            method:"POST",
-            body:payload,
-            headers:{
-                'Content-Type': 'multipart/form-data',
-                Authorization: `Bearer ${token}`,
-            }
-        })
+// export const getTecaherClassNotesOption = async()=>{
+//      const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+//         const res = await fetch(`${company.BASE_URL}/teacher/class-notes/classes`,{
+//             method:"GET",
+//             headers:{
+//                 Authorization: `Bearer ${token}`,
+//             }
+//         })
         
-        const data = await res.json()
-     return data;
-}
+//         const data = await res.json()
+//      return data;
+// }
 
-export const deteleClassNotes = async(id:any)=>{
-     const token = JSON.parse(await AsyncStorage.getItem("token") as any)
-        const res = await fetch(`${company.BASE_URL}/teacher/class-notes/${id}`,{
-            method:"DELETE",
-            headers:{
-                Authorization: `Bearer ${token}`,
-            }
-        })
+// export const getTecaherClassNotesList = async(payload:any)=>{
+//      const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+//         const res = await fetch(`${company.BASE_URL}/teacher/class-notes?school_class_id=${payload?.school_class_id}&section_id=${payload?.section_id}&subject_id=${payload?.subject_id}`,{
+//             method:"GET",
+//             headers:{
+//                 Authorization: `Bearer ${token}`,
+//             }
+//         })
         
-        const data = await res.json()
-     return data;
-}
+//         const data = await res.json()
+//      return data;
+// }
 
-export const getAllMarks = async()=>{
-     const token = JSON.parse(await AsyncStorage.getItem("token") as any)
-        const res = await fetch(`${company.BASE_URL}/teacher/marks/exams`,{
-            method:"GET",
-            headers:{
-                Authorization: `Bearer ${token}`,
-            }
-        })
+// export const createClassNotes = async(payload:any) => {
+//       const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+//         const res = await fetch(`${company.BASE_URL}/teacher/class-notes`,{
+//             method:"POST",
+//             body:payload,
+//             headers:{
+//                 'Content-Type': 'multipart/form-data',
+//                 Authorization: `Bearer ${token}`,
+//             }
+//         })
         
-        const data = await res.json()
-     return data;
-}
+//         const data = await res.json()
+//      return data;
+// }
 
-export const getEntryMarksApiCall = async(payload:any)=>{
-     const token = JSON.parse(await AsyncStorage.getItem("token") as any)
-        const res = await fetch(`${company.BASE_URL}/teacher/marks/${payload?.examId}/class?class_id=${payload?.classId}&section_id=${payload?.sectionId}`,{
-            method:"GET",
-            headers:{
-                Authorization: `Bearer ${token}`,
-            }
-        })
+// export const deteleClassNotes = async(id:any)=>{
+//      const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+//         const res = await fetch(`${company.BASE_URL}/teacher/class-notes/${id}`,{
+//             method:"DELETE",
+//             headers:{
+//                 Authorization: `Bearer ${token}`,
+//             }
+//         })
         
-        const data = await res.json()
-     return data;
-}
+//         const data = await res.json()
+//      return data;
+// }
 
-export const classMarksSaveApiCall = async(payload:any,examId:any)=> {
-        const token = JSON.parse(await AsyncStorage.getItem("token") as any)
-        const res = await fetch(`${company.BASE_URL}/teacher/marks/${examId}/class`,{
-            method:"POST",
-            body:JSON.stringify(payload),
-            headers:{
-               'Content-Type':'application/json',
-                Authorization: `Bearer ${token}`,
-            }
-        })
+// export const getAllMarks = async()=>{
+//      const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+//         const res = await fetch(`${company.BASE_URL}/teacher/marks/exams`,{
+//             method:"GET",
+//             headers:{
+//                 Authorization: `Bearer ${token}`,
+//             }
+//         })
         
-        const data = await res.json()
-     return data;
-}
+//         const data = await res.json()
+//      return data;
+// }
 
-export const studentMarksSaveApiCall = async(payload:any,examId:any,studentId:any)=> {
-        const token = JSON.parse(await AsyncStorage.getItem("token") as any)
-        const res = await fetch(`${company.BASE_URL}/teacher/marks/${examId}/student/${studentId}`,{
-            method:"POST",
-            body:JSON.stringify(payload),
-            headers:{
-               'Content-Type':'application/json',
-                Authorization: `Bearer ${token}`,
-            }
-        })
+// export const getEntryMarksApiCall = async(payload:any)=>{
+//      const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+//         const res = await fetch(`${company.BASE_URL}/teacher/marks/${payload?.examId}/class?class_id=${payload?.classId}&section_id=${payload?.sectionId}`,{
+//             method:"GET",
+//             headers:{
+//                 Authorization: `Bearer ${token}`,
+//             }
+//         })
         
-        const data = await res.json()
-     return data;
-}
+//         const data = await res.json()
+//      return data;
+// }
+
+// export const classMarksSaveApiCall = async(payload:any,examId:any)=> {
+//         const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+//         const res = await fetch(`${company.BASE_URL}/teacher/marks/${examId}/class`,{
+//             method:"POST",
+//             body:JSON.stringify(payload),
+//             headers:{
+//                'Content-Type':'application/json',
+//                 Authorization: `Bearer ${token}`,
+//             }
+//         })
+        
+//         const data = await res.json()
+//      return data;
+// }
+
+// export const studentMarksSaveApiCall = async(payload:any,examId:any,studentId:any)=> {
+//         const token = JSON.parse(await AsyncStorage.getItem("token") as any)
+//         const res = await fetch(`${company.BASE_URL}/teacher/marks/${examId}/student/${studentId}`,{
+//             method:"POST",
+//             body:JSON.stringify(payload),
+//             headers:{
+//                'Content-Type':'application/json',
+//                 Authorization: `Bearer ${token}`,
+//             }
+//         })
+        
+//         const data = await res.json()
+//      return data;
+// }
 
 
 

@@ -4,14 +4,17 @@ import { Ionicons, MaterialIcons, Feather, FontAwesome5 } from '@expo/vector-ico
 import { Colors } from '@/constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { routeToScreen } from 'expo-router/build/useScreens';
 import { LinearGradient } from 'expo-linear-gradient';
-import { loagoutApiCall } from '@/hooks/apiCalls/auth';
+
 import { useSelector } from 'react-redux';
+import { loagoutApiCall } from '@/redux/slices/authSlice';
 
 
 export default function SettingsScreen() {
   const { user } = useSelector((state: any) => state.auth);
+  const teacherPermission = user?.teacher
+  // console.log(teacherPermission?.can_mark_student_attendance);
+  
     const scheme = useColorScheme();
     const color = Colors[scheme === 'unspecified' ? 'light' : scheme];
 
@@ -110,7 +113,7 @@ const handleLogoutBtn = async () => {
 
       {/* Attendance Section */}
       {
-        user?.role === "teacher" && 
+        user?.role === "teacher" && teacherPermission?.can_mark_student_attendance === true &&
        <View style={styles.section}>
         <Text style={styles.sectionTitle}>Attendance</Text>
         <View style={styles.sectionCard}>
@@ -170,9 +173,6 @@ const handleLogoutBtn = async () => {
             hasArrow={true}
           />
           <View style={styles.divider} />
-<<<<<<< HEAD
-  
-=======
           <SettingItem
             title="Reports Card"
             icon="document-text-outline"
@@ -181,7 +181,6 @@ const handleLogoutBtn = async () => {
             hasArrow={true}
           /> */}
     
->>>>>>> 35f073c0855a7e390a0b712debbea56d1f9f13c7
         </View>
       </View>
 
@@ -196,7 +195,7 @@ const handleLogoutBtn = async () => {
             title="Online MCQ"
             icon="clipboard-outline"
             iconType="Ionicons"
-            screen="/screens/settings/onlineMCQ/exam"
+            screen="/screens/settings/onlineMCQ/onlineExam/exam"
             hasArrow={true}
           />
           <View style={styles.divider} />
@@ -205,7 +204,7 @@ const handleLogoutBtn = async () => {
             title="Exam Reports"
             icon="analytics-outline"
             iconType="Ionicons"
-            screen="/screens/settings/onlineMCQ/examReport"
+            screen="/screens/settings/onlineMCQ/examReport/report"
             hasArrow={true}
           />
 
@@ -263,21 +262,13 @@ const handleLogoutBtn = async () => {
           />
           <View style={styles.divider} />
           <SettingItem
-<<<<<<< HEAD
-            title="Terms & Conditions"
-=======
             title="Terms & Condtions"
->>>>>>> 35f073c0855a7e390a0b712debbea56d1f9f13c7
             icon="document-text-outline"
             iconType="Ionicons"
             screen="/screens/settings/terms"
             hasArrow={true}
           />
-<<<<<<< HEAD
-
-=======
  
->>>>>>> 35f073c0855a7e390a0b712debbea56d1f9f13c7
           <View style={styles.divider} />
           <SettingItem
             title="Contact Support"

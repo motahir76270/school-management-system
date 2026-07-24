@@ -3,10 +3,11 @@ import React, { useEffect, useState } from 'react'
 import HeaderSection from '@/components/features/header'
 import { Colors } from '@/constants/theme';
 import { useDispatch, useSelector } from 'react-redux';
-import { getStudentHolidayData } from '@/hooks/apiCalls/student';
-import { getTeacherHolidayData } from '@/hooks/apiCalls/teacher';
-import { setHolidayData } from '@/redux/noticeSlice';
+
+
 import { FullScreenLoader } from '@/hooks/use-screensLoder';
+import { getStudentHolidayData, getTeacherHolidayData, setHolidayData } from '@/redux/slices/noticeSlice';
+import { showError, showInfo } from '@/components/service/AlertService';
 
 // Define the Holiday type
 interface Holiday {
@@ -44,10 +45,10 @@ const Holidays = () => {
       if (res?.success === true) {
         dispatch(setHolidayData(res?.holidays));
       } else {
-        Alert.alert("Failed", res?.message || "Failed to fetch holidays");
+        showError(res?.message || "Failed to fetch holidays");
       }
     } catch (error) {
-      Alert.alert("Warning", "Server not responding! Please check internet connection");
+       showInfo("Server not responding! Please check internet connection");
     } finally {
       setLoading(false);
     }

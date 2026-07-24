@@ -2,12 +2,13 @@ import { View, Text, Alert, ScrollView, TextInput, TouchableOpacity, useColorSch
 import React, { useEffect, useState } from 'react'
 import { useLocalSearchParams } from 'expo-router/build/hooks'
 import HeaderSection from '@/components/features/header'
-import { setMarksEntryData } from '@/redux/markSlices'
+
 import { useDispatch, useSelector } from 'react-redux'
 import { FullScreenLoader } from '@/hooks/use-screensLoder'
-import { classMarksSaveApiCall, getEntryMarksApiCall, studentMarksSaveApiCall } from '@/hooks/apiCalls/teacher'
+
 import { Colors } from '@/constants/theme'
 import { Ionicons } from '@expo/vector-icons'
+import { classMarksSaveApiCall, getEntryMarksApiCall, setMarksEntryData, studentMarksSaveApiCall } from '@/redux/slices/markSlices'
 
 interface Schedule {
   id: string;

@@ -2,11 +2,12 @@ import { View, Text, Alert, useColorScheme } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import HeaderSection from '@/components/features/header'
 import { FullScreenLoader } from '@/hooks/use-screensLoder'
-import { getAllMarks } from '@/hooks/apiCalls/teacher'
+
 import { useDispatch, useSelector } from 'react-redux'
-import { setGetAllMarksData } from '@/redux/markSlices'
+
 import { Colors } from '@/constants/theme'
-import TecaherExam from '@/components/features/teachers/exams'
+import TeacherMarksEntry from '@/components/features/teachers/marksEntry'
+import { getAllMarks, setGetAllMarksData } from '@/redux/slices/markSlices'
 
 const Exams = () => {
     const scheme = useColorScheme();
@@ -42,11 +43,7 @@ const Exams = () => {
   return (
     <View>
       <HeaderSection title="Exams" />
-      { user?.role === "teacher" ?
-      <TecaherExam loading={loading} setLoading={setLoading} />
-      :
-      <Text> Students Exams</Text>
-      }
+      <TeacherMarksEntry loading={loading} setLoading={setLoading} />
       <FullScreenLoader loading={loading} />
     </View>
   )

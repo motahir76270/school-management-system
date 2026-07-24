@@ -1,61 +1,66 @@
-import React, { useEffect, useState } from 'react';
-import {  StyleSheet, useColorScheme, Dimensions, Alert } from 'react-native';
-import { Colors } from '@/constants/theme';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ThemedView } from '@/components/themed-view';
-import { ThemedText } from '@/components/themed-text';
-import { useDispatch, useSelector } from 'react-redux';
-import { getTecaherClassNotesOption } from '@/hooks/apiCalls/teacher';
-import TeacherClassNotes from '@/components/features/teachers/classNotes';
-import StudentClassNotes from '@/components/features/students/classNotes';
-import { setClassNotesType } from '@/redux/classNoteSlice';
-import { FullScreenLoader } from '@/hooks/use-screensLoder';
-import { getStudentClassNotesOption } from '@/hooks/apiCalls/student';
+import StudentClassNotes from "@/components/features/students/classNotes";
+import TeacherClassNotes from "@/components/features/teachers/classNotes";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { Colors } from "@/constants/theme";
 
 
-const { width } = Dimensions.get('window');
+import { FullScreenLoader } from "@/hooks/use-screensLoder";
+import { getStudentClassNotesOption, getTecaherClassNotesOption, setClassNotesType } from "@/redux/slices/classNoteSlice";
+import { LinearGradient } from "expo-linear-gradient";
+import React, { useEffect, useState } from "react";
+import { Alert, Dimensions, StyleSheet, useColorScheme } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useDispatch, useSelector } from "react-redux";
+
+const { width } = Dimensions.get("window");
 
 export default function AnalysisScreen() {
   const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const colors = Colors[scheme === "unspecified" ? "light" : scheme];
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
   const { user } = useSelector((state: any) => state.auth);
 
-  const fetchClassNotesTypes = async() => {
-    setLoading(true)
+  const fetchClassNotesTypes = async () => {
+    setLoading(true);
     try {
       let res;
-       if(user?.role === "teacher"){
-           res = await getTecaherClassNotesOption();
-       }else{
-           res = await getStudentClassNotesOption()
-       } 
-        if(res?.success === true){
-           dispatch(setClassNotesType(res))
-        }else{
-           Alert.alert("Failed", res?.message);
-        }
+      if (user?.role === "teacher") {
+        res = await getTecaherClassNotesOption();
+      } else {
+        res = await getStudentClassNotesOption();
+      }
+      if (res?.success === true) {
+        dispatch(setClassNotesType(res));
+      } else {
+        Alert.alert("Failed", res?.message);
+      }
     } catch {
-        Alert.alert("Warning", "Server not respose! Please check internet connections")
-    } finally{
-      setLoading(false)
+      Alert.alert(
+        "Warning",
+        "Server not respose! Please check internet connections",
+      );
+    } finally {
+      setLoading(false);
     }
-  }
-  useEffect(()=> {
-      fetchClassNotesTypes();
-  },[])
+  };
+  useEffect(() => {
+    fetchClassNotesTypes();
+  }, []);
 
-  
   return (
     <ThemedView style={styles.container}>
       {/* Header with Gradient */}
       <LinearGradient
-        colors={[colors.primary, colors.tertiary || colors.secondary, colors.secondary]}
+        colors={[
+          colors.primary,
+          colors.tertiary || colors.secondary,
+          colors.secondary,
+        ]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-       >
+      >
         <SafeAreaView style={styles.header}>
           <ThemedText style={styles.headerTitle} themeColor="background">
             Class Notes
@@ -66,13 +71,13 @@ export default function AnalysisScreen() {
         </SafeAreaView>
       </LinearGradient>
 
-      { user?.role === "teacher" ?
-       <TeacherClassNotes loading={loading} setLoading={setLoading} />
-       :
-       <StudentClassNotes />
-       }
+      {user?.role === "teacher" ? (
+        <TeacherClassNotes loading={loading} setLoading={setLoading} />
+      ) : (
+        <StudentClassNotes />
+      )}
 
-       <FullScreenLoader loading={loading} />
+      <FullScreenLoader loading={loading} />
     </ThemedView>
   );
 }
@@ -87,7 +92,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 5,
   },
   headerSubtitle: {
@@ -98,8 +103,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     paddingHorizontal: 15,
     marginTop: -15,
     gap: 10,
@@ -109,8 +114,8 @@ const styles = StyleSheet.create({
     minWidth: (width - 40) / 2 - 10,
     padding: 15,
     borderRadius: 15,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -120,18 +125,18 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 10,
   },
   statNumber: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    textAlign: 'center',
+    textAlign: "center",
   },
   section: {
     marginTop: 25,
@@ -141,38 +146,38 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 15,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   seeAll: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   subjectCard: {
     padding: 15,
     borderRadius: 15,
     marginBottom: 10,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
   subjectHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 10,
   },
   subjectName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   gradeBadge: {
     paddingHorizontal: 12,
@@ -181,35 +186,35 @@ const styles = StyleSheet.create({
   },
   gradeText: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   subjectProgress: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
   progressBar: {
     flex: 1,
     height: 6,
     borderRadius: 3,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   progressFill: {
-    height: '100%',
+    height: "100%",
     borderRadius: 3,
   },
   attendanceText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: "500",
     minWidth: 35,
   },
   activityCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 15,
     borderRadius: 15,
     marginBottom: 10,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -228,7 +233,7 @@ const styles = StyleSheet.create({
   },
   activityTitle: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 2,
   },
   activityDate: {
@@ -241,6 +246,6 @@ const styles = StyleSheet.create({
   },
   activityStatusText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

@@ -29,7 +29,7 @@ interface Exam {
   classes: Class[];
 }
 
-const TeacherExam = ({ loading, setLoading }: any) => {
+const TeacherMarksEntry = ({ loading, setLoading }: any) => {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
   const { getAllMarksData } = useSelector((state: any) => state.marks);
@@ -81,7 +81,7 @@ const TeacherExam = ({ loading, setLoading }: any) => {
     });
 
      router.push({
-      pathname: `screens/features/exams/classExams/${examId}` as any,
+      pathname: `screens/features/marksEntry/classExams/${examId}` as any,
       params: {
         classId: classData.school_class_id,
         sectionId: classData.section_id,
@@ -454,4 +454,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TeacherExam;
+export default TeacherMarksEntry;

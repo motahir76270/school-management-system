@@ -1,31 +1,28 @@
+import CustomAlertModal from "@/components/modal/CustomAlertModal";
 import { Colors } from "@/constants/theme";
-import { LoginApiCall } from "@/hooks/apiCalls/auth";
+
+import { FullScreenLoader } from "@/hooks/use-screensLoder";
+import { LoginApiCall, setUser } from "@/redux/slices/authSlice";
+import AuthValiation from "@/validations/auth";
 import { Ionicons } from "@expo/vector-icons";
+import { zodResolver } from "@hookform/resolvers/zod";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Device from "expo-device";
 import { router } from "expo-router";
 import React, { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useColorScheme,
-  View,
-  Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useColorScheme,
+    View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import * as Device from "expo-device";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import AuthValiation from "@/validations/auth";
-import { FullScreenLoader } from "@/hooks/use-screensLoder";
 import { useDispatch } from "react-redux";
-import { setUser } from "@/redux/authSlice";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import CustomAlertModal from "@/components/modal/CustomAlertModal";
+import { z } from "zod";
 
 type LoginFormData = z.infer<typeof AuthValiation.loginSchema>;
 
@@ -73,7 +70,7 @@ export default function LoginScreen({ navigation }: any) {
 
     try {
       let res;
-      
+
       if (loginType === "teacher") {
         const payload = {
           login_type: loginType,
@@ -91,23 +88,34 @@ export default function LoginScreen({ navigation }: any) {
         };
         res = await LoginApiCall(payload);
       }
-    
+
       if (res?.success === true) {
         await AsyncStorage.setItem("token", JSON.stringify(res?.token));
         await AsyncStorage.setItem("user", JSON.stringify(res));
-        const parsedUser = JSON.parse(await AsyncStorage.getItem("user") as any);
+        const parsedUser = JSON.parse(
+          (await AsyncStorage.getItem("user")) as any,
+        );
         dispatch(setUser(parsedUser?.user));
-        router.replace('/(tabs)');
+        router.replace("/(tabs)");
       } else {
         // Replace Alert.alert with showAlert
-        showAlert("failed", res?.message || "Invalid credentials. Please try again.", "Login Failed");
+        showAlert(
+          "failed",
+          res?.message || "Invalid credentials. Please try again.",
+          "Login Failed",
+        );
       }
     } catch (error: any) {
       setError("root", {
-        message: error?.message || "Network error. Please check your connection.",
+        message:
+          error?.message || "Network error. Please check your connection.",
       });
       // Replace Alert.alert with showAlert
-      showAlert("warning", error?.message || "Network error. Please check your connection.", "Connection Error");
+      showAlert(
+        "warning",
+        error?.message || "Network error. Please check your connection.",
+        "Connection Error",
+      );
     } finally {
       setLoading(false);
     }
@@ -118,11 +126,11 @@ export default function LoginScreen({ navigation }: any) {
   };
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header with Gradient Effect */}
-      <SafeAreaView style={[styles.headerSection, { backgroundColor: colors.primary }]}>
+      <SafeAreaView
+        style={[styles.headerSection, { backgroundColor: colors.primary }]}
+      >
         <View style={styles.headerContent}>
           <View style={styles.logoContainer}>
             <Ionicons name="school-outline" size={40} color="#fff" />
@@ -130,8 +138,8 @@ export default function LoginScreen({ navigation }: any) {
           <Text style={styles.headerTitle}>EduConnect</Text>
         </View>
       </SafeAreaView>
-      
-      <ScrollView 
+
+      <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -148,11 +156,18 @@ export default function LoginScreen({ navigation }: any) {
             </View>
 
             {/* Login Type Toggle */}
-            <View style={[styles.toggleContainer, { backgroundColor: colors.backgroundElement }]}>
+            <View
+              style={[
+                styles.toggleContainer,
+                { backgroundColor: colors.backgroundElement },
+              ]}
+            >
               <TouchableOpacity
                 style={[
                   styles.toggleButton,
-                  loginType === "student" && { backgroundColor: colors.primary },
+                  loginType === "student" && {
+                    backgroundColor: colors.primary,
+                  },
                 ]}
                 onPress={() => toggleLoginType("student")}
                 disabled={loading}
@@ -170,7 +185,9 @@ export default function LoginScreen({ navigation }: any) {
               <TouchableOpacity
                 style={[
                   styles.toggleButton,
-                  loginType === "teacher" && { backgroundColor: colors.primary },
+                  loginType === "teacher" && {
+                    backgroundColor: colors.primary,
+                  },
                 ]}
                 onPress={() => toggleLoginType("teacher")}
                 disabled={loading}
@@ -234,7 +251,7 @@ export default function LoginScreen({ navigation }: any) {
               {/* Password Field */}
               <View style={styles.fieldContainer}>
                 <Text style={[styles.label, { color: colors.text }]}>
-                   Password
+                  Password
                 </Text>
                 <Controller
                   control={control}
@@ -245,14 +262,18 @@ export default function LoginScreen({ navigation }: any) {
                         styles.inputContainer,
                         {
                           backgroundColor: colors.backgroundElement,
-                          borderColor: errors.password ? "#FF3B30" : colors.border,
+                          borderColor: errors.password
+                            ? "#FF3B30"
+                            : colors.border,
                         },
                       ]}
                     >
                       <Ionicons
                         name={"lock-closed-outline"}
                         size={20}
-                        color={errors.password ? "#FF3B30" : colors.textSecondary}
+                        color={
+                          errors.password ? "#FF3B30" : colors.textSecondary
+                        }
                       />
                       <TextInput
                         style={[styles.input, { color: colors.text }]}
@@ -260,25 +281,32 @@ export default function LoginScreen({ navigation }: any) {
                         placeholderTextColor={colors.textSecondary}
                         value={value}
                         onChangeText={onChange}
-                        secureTextEntry={loginType === "teacher" || loginType === "student"  ? !showPassword : false}
+                        secureTextEntry={
+                          loginType === "teacher" || loginType === "student"
+                            ? !showPassword
+                            : false
+                        }
                         editable={!loading}
                       />
-                        <TouchableOpacity
-                          onPress={() => setShowPassword(!showPassword)}
-                          disabled={loading}
-                        >
-                          <Ionicons
-                            name={showPassword ? "eye-off-outline" : "eye-outline"}
-                            size={20}
-                            color={colors.textSecondary}
-                          />
-                        </TouchableOpacity>
-      
+                      <TouchableOpacity
+                        onPress={() => setShowPassword(!showPassword)}
+                        disabled={loading}
+                      >
+                        <Ionicons
+                          name={
+                            showPassword ? "eye-off-outline" : "eye-outline"
+                          }
+                          size={20}
+                          color={colors.textSecondary}
+                        />
+                      </TouchableOpacity>
                     </View>
                   )}
                 />
                 {errors.password && (
-                  <Text style={styles.errorText}>{errors.password.message}</Text>
+                  <Text style={styles.errorText}>
+                    {errors.password.message}
+                  </Text>
                 )}
               </View>
 
@@ -308,7 +336,10 @@ export default function LoginScreen({ navigation }: any) {
                     )}
                   </View>
                   <Text
-                    style={[styles.rememberText, { color: colors.textSecondary }]}
+                    style={[
+                      styles.rememberText,
+                      { color: colors.textSecondary },
+                    ]}
                   >
                     Remember me
                   </Text>
@@ -323,9 +354,16 @@ export default function LoginScreen({ navigation }: any) {
 
               {/* Root Error Message */}
               {errors.root && (
-                <View style={[styles.rootErrorContainer, { backgroundColor: colors.error }]}>
+                <View
+                  style={[
+                    styles.rootErrorContainer,
+                    { backgroundColor: colors.error },
+                  ]}
+                >
                   <Ionicons name="alert-circle" size={20} color="#FF3B30" />
-                  <Text style={styles.rootErrorText}>{errors.root.message}</Text>
+                  <Text style={styles.rootErrorText}>
+                    {errors.root.message}
+                  </Text>
                 </View>
               )}
 
@@ -344,14 +382,13 @@ export default function LoginScreen({ navigation }: any) {
                   {loading ? "Logging in..." : "Login"}
                 </Text>
               </TouchableOpacity>
-
             </View>
           </View>
         </View>
       </ScrollView>
-      
+
       <FullScreenLoader loading={loading} />
-      
+
       {/* Custom Alert Modal */}
       <CustomAlertModal
         visible={showAlertModal}
@@ -372,7 +409,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom:320
+    paddingBottom: 320,
   },
   safeArea: {
     flex: 1,

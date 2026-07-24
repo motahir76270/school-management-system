@@ -1,6 +1,6 @@
 import * as Device from 'expo-device';
 import { 
-  StyleSheet, View, FlatList, RefreshControl, Alert, ActivityIndicator 
+  StyleSheet, View, FlatList, RefreshControl, ActivityIndicator 
 } from 'react-native';
 import { BottomTabInset, Spacing, MaxContentWidth } from '@/constants/theme';
 import Navbar from '@/components/home/navbar/navbar';
@@ -8,37 +8,25 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getStudentProfile, getTeacherProfile } from '@/hooks/apiCalls/auth';
+
 import StudentFeatureSection from '@/components/home/sections/studentFeatures';
 import { getTeacherPostData, getTeacherTimeTable } from '@/hooks/apiCalls/teacher';
 import { getStudentPostData, getStudentTimeTable } from '@/hooks/apiCalls/student';
-import StudentScheduleSection from '@/components/home/sections/studentScheduleSection';
 import TeacherFeatureSection from '@/components/home/sections/teacherFeatures';
-import TechaerScheduleSection from '@/components/home/sections/teacherScheduleSection';
 import PostSections from '@/components/home/sections/postSections';
-import CustomAlertModal from '@/components/modal/CustomAlertModal';
+import { getStudentProfile, getTeacherProfile } from '@/redux/slices/authSlice';
+import {  showError, showWarning  } from '@/components/service/AlertService';
 
 export default function HomeScreen() {
   const { user } = useSelector((state: any) => state.auth);
+  // console.log();
+  
+  
   const dispatch = useDispatch();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
-  
-  // Alert states
-  const [showAlertModal, setShowAlertModal] = useState(false);
-  const [alertType, setAlertType] = useState<any>('success');
-  const [alertMessage, setAlertMessage] = useState('');
-  const [alertTitle, setAlertTitle] = useState('');
 
-  // Show alert helper
-  const showAlert = (type: any, message: string, title?: string) => {
-    setAlertType(type);
-    setAlertMessage(message);
-    setAlertTitle(title || '');
-    setShowAlertModal(true);
-  };
-
-  // Your data loading function
+  // Load data function
   const loadData = async () => {
     try {
       const parsedUser = JSON.parse(await AsyncStorage.getItem("user") as any);
@@ -53,7 +41,7 @@ export default function HomeScreen() {
       }
       return true;
     } catch (error) {
-      showAlert('failed', 'Failed to load data. Please try again.', 'Error');
+      showError('Failed to load data. Please try again.', 'Error');
       return false;
     }
   };
@@ -70,7 +58,7 @@ export default function HomeScreen() {
       }
       await loadData();
     } catch (error) {
-      showAlert('warning', 'Server not responding! Please check internet connection.', 'Warning');
+      showWarning('Server not responding! Please check internet connection.', 'Warning');
     } finally {
       setRefreshing(false);
     }
@@ -89,8 +77,7 @@ export default function HomeScreen() {
         }
         await loadData();
       } catch (error) {
-        console.error('Initialization error:', error);
-        showAlert('failed', 'Failed to initialize app. Please restart.', 'Error');
+        showError('Failed to initialize app. Please restart.', 'Error');
       } finally {
         setLoading(false);
       }
@@ -107,10 +94,6 @@ export default function HomeScreen() {
         return user?.role === "teacher" ? 
           <TeacherFeatureSection /> : 
           <StudentFeatureSection />;
-      case 'schedule':
-        return user?.role === "teacher" ? 
-          <TechaerScheduleSection /> : 
-          <StudentScheduleSection />;
       case 'posts':
         return <PostSections />;
       default:
@@ -119,7 +102,7 @@ export default function HomeScreen() {
   };
 
   // Define sections order
-  const sections = ['navbar', 'features', 'posts'];
+  const sections = ['navbar', 'features', 'schedule', 'posts'];
 
   // Show loading screen while initializing
   if (loading) {
@@ -149,23 +132,10 @@ export default function HomeScreen() {
             titleColor="#007AFF"
           />
         }
-        // Important: Disable nested scrolling warnings
         removeClippedSubviews={false}
-        // Performance optimizations
         initialNumToRender={3}
         maxToRenderPerBatch={3}
         windowSize={5}
-      />
-
-      {/* Custom Alert Modal */}
-      <CustomAlertModal
-        visible={showAlertModal}
-        type={alertType}
-        message={alertMessage}
-        title={alertTitle}
-        onClose={() => setShowAlertModal(false)}
-        autoDismiss={true}
-        autoDismissTime={10000}
       />
     </View>
   );

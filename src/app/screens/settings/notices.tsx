@@ -1,12 +1,15 @@
 import { View, Text, Alert, useColorScheme, FlatList, StyleSheet } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import HeaderSection from '@/components/features/header'
-import { getStudentNoticeData } from '@/hooks/apiCalls/student'
+
 import { useDispatch, useSelector } from 'react-redux'
-import { setNoticeData } from '@/redux/noticeSlice'
+
 import { FullScreenLoader } from '@/hooks/use-screensLoder'
 import { Colors } from '@/constants/theme'
-import { getTeacherNoticeData } from '@/hooks/apiCalls/teacher'
+
+import { getStudentNoticeData, getTeacherNoticeData, setNoticeData } from '@/redux/slices/noticeSlice'
+import { showError, showInfo } from '@/components/service/AlertService'
+
 
 // Define the Notice type
 interface Notice {
@@ -35,13 +38,14 @@ const Notices = () => {
       }else{
         res = await getStudentNoticeData();
       }
+  
       if (res?.success === true) {
         dispatch(setNoticeData(res?.notices));
       } else {
-        Alert.alert("Failed", res?.message || "Failed to fetch notices");
+        showError(res?.message || "Failed to fetch notices");
       }
     } catch (error) {
-      Alert.alert("Warning", "Server not responding! Please check internet connection");
+      showInfo("Server not responding! Please check internet connection");
     } finally {
       setLoading(false);
     }

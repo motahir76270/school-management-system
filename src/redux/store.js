@@ -1,23 +1,26 @@
 import { configureStore } from "@reduxjs/toolkit";
-import authReducer from './authSlice'
-import studentReducer from './studentSlice'
-import postReducer from './postSlice'
-import timeTableReducer from './timeTableSlice'
-import leaveReducer from './leaveSlice'
-import noticeRducer from './noticeSlice'
-import classNotesReduce from './classNoteSlice'
-import marksReducer from './markSlices'
-
+import studentExamReducer from "./examSlice/studentExamSlice";
+import leaveReducer from "./leaveSlice";
+import marksReducer from "./slices/markSlices";
+import postReducer from "./postSlice";
+import authReducer from "./slices/authSlice";
+import classNotesReduce from "./slices/classNoteSlice";
+import noticeRducer from "./slices/noticeSlice";
+import studentReducer from "./studentSlice";
+import timeTableReducer from "./timeTableSlice";
+import teacherExamReducer from './examSlice/teacherExamSlice'
 
 export const store = configureStore({
-  reducer:{
+  reducer: {
     auth: authReducer,
     student: studentReducer,
     timeTable: timeTableReducer,
-    posts:postReducer,
-    leave:leaveReducer,
-    notice:noticeRducer,
-    classNotes:classNotesReduce,
-    marks:marksReducer
+    posts: postReducer,
+    leave: leaveReducer,
+    notice: noticeRducer,
+    classNotes: classNotesReduce,
+    marks: marksReducer,
+    studentExam: studentExamReducer,
+    teacherExam: teacherExamReducer,
   },
-})
+});

@@ -1,4 +1,4 @@
-import { Text, useColorScheme, StyleSheet, View, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native'
+import { Text, useColorScheme, StyleSheet, View, ScrollView, TextInput, TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,8 +8,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import AuthValiation from '@/validations/auth';
 import { useSelector } from 'react-redux';
-import { studentPasswordChange, teacherPasswordChange } from '@/hooks/apiCalls/auth';
+
 import { FullScreenLoader } from '@/hooks/use-screensLoder';
+import { studentPasswordChange, teacherPasswordChange } from '@/redux/slices/authSlice';
+import { showError, showInfo, showSuccess, showWarning } from '@/components/service/AlertService';
 
 
 type PasswordFormData = z.infer<typeof AuthValiation.passwordSchema>;
@@ -81,21 +83,21 @@ const ChangePasswordScreen = () => {
               }
                const res =  await teacherPasswordChange(payload);
                  if(res?.success === true){
-                  Alert.alert("SUCCESS", res?.message);
+                  showSuccess(res?.message);
                   reset();
                  }else{
-                  Alert.alert("SUCCESS", res?.message);
+                  showError(res?.message);
                  }
              }else{
                 const res = await studentPasswordChange(data)
                    if(res?.success === true){
-                  Alert.alert("SUCCESS", res?.message);
+                  showSuccess(res?.message);
                  }else{
-                  Alert.alert("SUCCESS", res?.message);
+                  showError(res?.message);
                  }
              }     
     } catch (error) {
-      Alert.alert('Failed', 'Server not resposed! Please check internet connection and try again later');
+       showInfo('Server not resposed! Please check internet connection and try again later');
     } finally {
       setLoading(false);
     }
